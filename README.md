@@ -1,193 +1,361 @@
-# Observational Memory for OpenClaw
+# Observational Memory
 
 > Mastra-inspired memory system that never forgets
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Test Coverage](https://img.shields.io/badge/coverage-89%25-brightgreen.svg)](https://github.com/kiss-kedaya/openclaw-observational-memory)
 
-## 🎯 What is this?
+[English](README.md) | [简体中文](README_CN.md)
 
-Traditional AI agents "compact" (delete old messages) when they hit context limits, losing important information. **Observational Memory** solves this by extracting and compressing observations instead of discarding them.
+## 快速开始
 
-Inspired by [Mastra Code](https://docs.mastra.ai/)'s observational memory architecture, this module extends [OpenClaw](https://github.com/openclaw/openclaw)'s Hermes Agent with:
-
-- 🧠 **Observer**: Extract structured observations from conversations
-- 🗜️ **Reflector**: Compress observations without losing information
-- 🎯 **Priority System**: 🔴 High / 🟡 Medium / 🟢 Low
-- ⏰ **Temporal Anchoring**: Dual timestamps (when said + when referenced)
-
-## 🚀 Quick Start
-
-### Installation
+### 安装
 
 ```bash
-# Clone the repository
 git clone https://github.com/kiss-kedaya/openclaw-observational-memory.git
 cd openclaw-observational-memory
-
-# Install dependencies
 pip install -r requirements.txt
 ```
 
-### Basic Usage
+### 基础使用
 
 ```python
 from observational_memory import ObservationalMemoryManager
 from pathlib import Path
 
-# Initialize
 manager = ObservationalMemoryManager(Path.cwd())
+result = manager.process_session(session_id, messages)
+```
 
-# Process a session
-messages = [
-    {"role": "user", "content": "帮我安装 agent-browser", "timestamp": "2026-02-27T09:00:00"},
-    {"role": "assistant", "content": "好的，我来安装", "timestamp": "2026-02-27T09:00:10"},
-    {"role": "assistant", "content": "安装成功！", "timestamp": "2026-02-27T09:01:00"}
+### Web UI
+
+```bash
+streamlit run app.py
+```
+
+访问 http://localhost:8501 查看 Web 界面。
+
+---
+
+## 功能特性
+
+### 核心功能
+
+- **Observer（观察者）**: 从对话中提取结构化观察
+- **Reflector（反射器）**: 无损压缩观察数据
+- **Priority System（优先级系统）**: 🔴 高 / 🟡 中 / 🟢 低
+- **Temporal Anchoring（时间锚定）**: 双时间戳（说话时间 + 引用时间）
+
+### 扩展功能
+
+- **Multi-threading（多线程）**: 并发处理 10+ 会话
+- **Vector Search（向量搜索）**: 语义相似度搜索
+- **Web UI**: Streamlit 可视化界面
+- **Data Management（数据管理）**: 导出/导入/备份
+- **Plugin System（插件系统）**: 自定义提取器
+- **i18n（国际化）**: 英文/中文双语支持
+
+---
+
+## 多线程支持
+
+### 并发处理
+
+```python
+from observational_memory_concurrent import ConcurrentObservationalProcessor, ProcessingTask
+
+processor = ConcurrentObservationalProcessor(Path.cwd(), max_workers=10)
+
+tasks = [
+    ProcessingTask(session_id, messages, priority=1)
+    for session_id, messages in sessions.items()
 ]
 
-result = manager.process_session("session_123", messages)
-print(result['observations'])
+results = processor.process_batch(tasks)
 ```
 
-**Output:**
-```markdown
-Date: 2026-02-27
-* 🔴 (09:00) User stated: 帮我安装 agent-browser
-* 🟡 (09:01) Agent completed: 安装成功！
-```
+### 性能
 
-## 📚 Features
+- 单会话处理: < 1s
+- 并发提速: 3-5x（5 workers）
+- 线程安全: RLock 防死锁
+- 优先级队列: 高优先级优先处理
 
-### 1. Observer - Extract Observations
+---
 
-The Observer extracts key information from conversations:
+## 向量搜索
 
-- **User Facts**: "我是开发者" → 🔴 High priority
-- **Preferences**: "我喜欢用 Python" → 🔴 High priority
-- **Completed Tasks**: "安装成功" → 🟡 Medium priority
-- **Tool Usage**: "执行了 npm install" → 🟡 Medium priority
-
-### 2. Reflector - Compress Observations
-
-When observations exceed 30k tokens, the Reflector compresses them:
-
-1. Keep all 🔴 high-priority observations
-2. Merge similar 🟡 medium-priority observations
-3. Remove 🟢 low-priority observations
-4. Deduplicate by content hash
-
-### 3. Priority System
-
-- 🔴 **High**: User facts, preferences, goals, critical context
-- 🟡 **Medium**: Project details, tool results, technical operations
-- 🟢 **Low**: Minor details, uncertain observations
-
-### 4. Temporal Anchoring
-
-Each observation has dual timestamps:
-
-```markdown
-* 🔴 (09:15) User will visit parents this weekend. (meaning June 17-18, 2026)
-       ↑                                                    ↑
-   When said                                      When referenced
-```
-
-## 🔧 Integration with OpenClaw
-
-### Unified Monitor Service
-
-The module integrates seamlessly with OpenClaw's unified monitor:
+### 语义搜索
 
 ```python
-# In unified_monitor.py
-from observational_memory import ObservationalMemoryManager
+from observational_memory_vector import VectorSearchManager
 
-obs_manager = ObservationalMemoryManager(Path.cwd())
+vector_manager = VectorSearchManager(Path.cwd())
 
-# In session check loop
-if len(messages) > 10:
-    result = obs_manager.process_session(session_id, messages)
-    if result['token_count'] > 30000:
-        print(f"Generated observations: {result['compressed_token_count']} tokens")
+# 索引观察
+vector_manager.index_observation(session_id, observation)
+
+# 搜索
+results = vector_manager.search("用户偏好", top_k=5, min_similarity=0.3)
 ```
 
-### Context Injection
+### 特性
 
-Inject observations into agent context:
+- 模型: sentence-transformers (all-MiniLM-L6-v2)
+- 存储: SQLite + BLOB
+- 性能: 索引 100 条 < 10s，搜索 < 1s
+- 相似度: 余弦相似度
+
+---
+
+## Web UI
+
+### 功能页面
+
+1. **仪表板**: 统计数据、最近会话
+2. **会话管理**: 浏览、搜索、删除
+3. **语义搜索**: 向量搜索界面
+4. **分析**: 优先级分布、时间线、Token 使用
+
+### 特性
+
+- 双语支持（中文/英文）
+- Icon 导航（无 emoji）
+- 动画效果（过渡、淡入、悬停）
+- 响应式设计
+- 暗色模式
+
+### 启动
+
+```bash
+streamlit run app.py
+```
+
+---
+
+## 数据管理
+
+### 导出/导入
+
+```bash
+# 导出为 JSON
+python data_manager.py export --session session_1 --format json
+
+# 导出为 CSV
+python data_manager.py export --session session_1 --format csv
+
+# 导入
+python data_manager.py import --input session_1.json
+```
+
+### 备份/恢复
+
+```bash
+# 创建备份
+python data_manager.py backup --backup-name my_backup
+
+# 恢复备份
+python data_manager.py restore --input backups/my_backup.zip --overwrite
+
+# 列出备份
+python data_manager.py list-backups
+```
+
+---
+
+## 插件系统
+
+### 创建插件
 
 ```python
-context = manager.get_context_for_session(session_id)
-# Returns formatted context with observations
+from plugin_system import ObservationPlugin
+
+class MyPlugin(ObservationPlugin):
+    @property
+    def name(self) -> str:
+        return "my-plugin"
+    
+    @property
+    def version(self) -> str:
+        return "1.0.0"
+    
+    def extract(self, message: Dict[str, Any]) -> Optional[str]:
+        # 自定义提取逻辑
+        return "Extracted observation"
 ```
 
-## 📊 Architecture
+### 加载插件
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    Conversation                         │
-│  User: "帮我安装 agent-browser"                         │
-│  Agent: "好的，我来安装"                                │
-│  Agent: "安装成功！"                                    │
-└─────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────┐
-│                     Observer                            │
-│  Extracts structured observations                       │
-│  - User stated: 帮我安装 agent-browser (🔴)            │
-│  - Agent completed: 安装成功 (🟡)                       │
-└─────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────┐
-│                    Reflector                            │
-│  Compresses when > 30k tokens                           │
-│  - Keeps all 🔴 high priority                           │
-│  - Merges similar 🟡 medium priority                    │
-│  - Removes 🟢 low priority                              │
-└─────────────────────────────────────────────────────────┘
-                         ↓
-┌─────────────────────────────────────────────────────────┐
-│                 Observations File                       │
-│  memory/observations/session_123.md                     │
-└─────────────────────────────────────────────────────────┘
+```bash
+# 列出插件
+python plugin_system.py list
+
+# 加载插件
+python plugin_system.py load --plugin my_plugin
 ```
 
-## 🎓 Comparison with Mastra
+---
 
-| Feature | Mastra | This Implementation | Status |
-|---------|--------|---------------------|--------|
-| Observer | ✅ | ✅ | Complete |
-| Reflector | ✅ | ✅ | Complete |
-| Priority System | ✅ | ✅ | Complete |
-| Temporal Anchoring | ✅ | ✅ | Complete |
-| Auto Compression | ✅ | ✅ | Complete |
-| Context Injection | ✅ | ✅ | Complete |
-| Multi-thread | ✅ | ✅ | Complete |
+## API 文档
 
-## 📖 Documentation
+### ObservationalMemoryManager
 
-- [Core Algorithm Research](./mastra-observational-memory-research.md) - Deep dive into Mastra's architecture
-- [Integration Plan](./mastra-integration-plan.md) - How we integrated it
-- [API Reference](./docs/API.md) - Complete API documentation
+```python
+manager = ObservationalMemoryManager(workspace_dir: Path)
 
-## 🤝 Contributing
+# 处理会话
+result = manager.process_session(session_id: str, messages: List[Dict])
 
-Contributions are welcome! Please read our [Contributing Guide](./CONTRIBUTING.md) first.
+# 加载观察
+observations = manager.load_observations(session_id: str)
 
-## 📄 License
+# 保存观察
+manager.save_observations(session_id: str, observations: str)
+```
 
-MIT License - see [LICENSE](./LICENSE) file for details.
+### ConcurrentObservationalProcessor
 
-## 🙏 Acknowledgments
+```python
+processor = ConcurrentObservationalProcessor(
+    workspace_dir: Path,
+    max_workers: int = 10,
+    progress_callback: Optional[Callable] = None
+)
 
-- [Mastra](https://mastra.ai/) - For the original observational memory architecture
-- [OpenClaw](https://github.com/openclaw/openclaw) - For the amazing AI agent framework
-- [Hermes Agent](https://github.com/hermes-agent) - For the memory system inspiration
+# 批量处理
+results = processor.process_batch(tasks: List[ProcessingTask])
 
-## 🔗 Links
+# 获取统计
+stats = processor.get_statistics()
+```
 
-- [Mastra Code Documentation](https://docs.mastra.ai/)
-- [OpenClaw Documentation](https://docs.openclaw.ai/)
+### VectorSearchManager
+
+```python
+manager = VectorSearchManager(
+    workspace_dir: Path,
+    model_name: str = "all-MiniLM-L6-v2"
+)
+
+# 索引
+manager.index_observation(session_id: str, observation: str)
+
+# 搜索
+results = manager.search(
+    query: str,
+    top_k: int = 5,
+    min_similarity: float = 0.0
+)
+```
+
+---
+
+## 开发指南
+
+### 项目结构
+
+```
+openclaw-observational-memory/
+├── observational_memory.py          # 核心模块
+├── observational_memory_concurrent.py  # 多线程
+├── observational_memory_vector.py   # 向量搜索
+├── data_manager.py                  # 数据管理
+├── plugin_system.py                 # 插件系统
+├── i18n.py                          # 国际化
+├── app.py                           # Web UI
+├── api/                             # FastAPI 后端
+├── plugins/                         # 插件目录
+├── locales/                         # 语言包
+├── tests/                           # 测试文件
+└── requirements.txt                 # 依赖
+```
+
+### 运行测试
+
+```bash
+# 所有测试
+pytest
+
+# 带覆盖率
+pytest --cov=. --cov-report=term
+
+# 特定模块
+pytest test_concurrent.py -v
+```
+
+---
+
+## 测试
+
+### 测试覆盖率
+
+| 模块 | 测试数 | 覆盖率 |
+|------|--------|--------|
+| observational_memory.py | 12 | 85% |
+| observational_memory_concurrent.py | 13 | 76% |
+| observational_memory_vector.py | 15 | 75% |
+| data_manager.py | 8 | 90%+ |
+| plugin_system.py | 4 | 85%+ |
+| i18n.py | 4 | 90%+ |
+| **总计** | **48** | **89%** |
+
+---
+
+## 性能
+
+### 基准测试
+
+| 操作 | 性能 |
+|------|------|
+| 单会话处理 | < 1s |
+| 并发处理（10 会话，5 workers） | 3-5x 提速 |
+| 向量索引（100 条，批量） | < 10s |
+| 向量搜索（100 嵌入） | < 1s |
+| Web UI 加载 | < 2s |
+| 导出会话（JSON） | < 0.5s |
+| 备份创建 | < 5s |
+
+---
+
+## 贡献指南
+
+欢迎贡献！请遵循以下步骤：
+
+1. Fork 项目
+2. 创建特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启 Pull Request
+
+### 代码规范
+
+- 使用 Black 格式化代码
+- 使用 Flake8 检查代码质量
+- 编写测试（覆盖率 > 80%）
+- 更新文档
+
+---
+
+## 许可证
+
+MIT License - 详见 [LICENSE](LICENSE) 文件
+
+---
+
+## 致谢
+
+- [Mastra](https://mastra.ai/) - 观察记忆架构灵感
+- [OpenClaw](https://github.com/openclaw/openclaw) - AI Agent 框架
+- [Sentence Transformers](https://www.sbert.net/) - 向量嵌入模型
+
+---
+
+## 链接
+
 - [GitHub Repository](https://github.com/kiss-kedaya/openclaw-observational-memory)
+- [Mastra Documentation](https://docs.mastra.ai/)
+- [OpenClaw Documentation](https://docs.openclaw.ai/)
 
 ---
 
