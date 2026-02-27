@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use crate::db::models::Observation;
 
 #[derive(Debug, Clone, serde::Serialize)]
@@ -27,17 +25,14 @@ impl MemoryOptimizer {
     pub fn compress(&self, observations: Vec<Observation>) -> CompressionResult {
         let original_count = observations.len();
         
-        // Remove duplicates
-        let mut seen = std::collections::HashSet::new();
-        let compressed: Vec<_> = observations
-            .into_iter()
-            .filter(|obs| {
-                let normalized = obs.content.to_lowercase().trim().to_string();
-                seen.insert(normalized)
-            })
-            .collect();
-
-        let compressed_count = compressed.len();
+        let mut unique = Vec::new();
+        for obs in observations {
+            if !unique.iter().any(|o: &Observation| o.content == obs.content) {
+                unique.push(obs);
+            }
+        }
+        
+        let compressed_count = unique.len();
         let removed = original_count - compressed_count;
         let ratio = if original_count > 0 {
             removed as f32 / original_count as f32
@@ -54,75 +49,34 @@ impl MemoryOptimizer {
     }
 
     pub fn cluster_by_topic(&self, observations: Vec<Observation>) -> Vec<Cluster> {
-        let mut clusters: HashMap<String, Vec<String>> = HashMap::new();
-
         let keywords = vec![
-            ("工具", vec!["工具", "tool", "安装", "install"]),
-            ("错误", vec!["错误", "error", "bug", "问题"]),
-            ("配置", vec!["配置", "config", "设置", "setting"]),
-            ("UI", vec!["界面", "UI", "页面", "page"]),
-            ("数据", vec!["数据", "data", "导出", "export"]),
+            ("Tools", vec!["tool", "agent", "install"]),
+            ("Errors", vec!["error", "bug", "exception"]),
+            ("Config", vec!["config", "setting", "setup"]),
+            ("UI", vec!["ui", "page", "interface"]),
+            ("Data", vec!["data", "export", "import"]),
         ];
 
-        for obs in observations {
-            let mut matched = false;
-            for (topic, kws) in &keywords {
-                if kws.iter().any(|kw| obs.content.to_lowercase().contains(kw)) {
-                    clusters
-                        .entry(topic.to_string())
-                        .or_insert_with(Vec::new)
-                        .push(obs.content.clone());
-                    matched = true;
-                    break;
-                }
-            }
+        let mut clusters = Vec::new();
 
-            if !matched {
-                clusters
-                    .entry("其他".to_string())
-                    .or_insert_with(Vec::new)
-                    .push(obs.content);
+        for (topic, kws) in keywords {
+            let matching: Vec<String> = observations
+                .iter()
+                .filter(|obs| {
+                    kws.iter().any(|kw| obs.content.to_lowercase().contains(kw))
+                })
+                .map(|obs| obs.content.clone())
+                .collect();
+
+            if !matching.is_empty() {
+                clusters.push(Cluster {
+                    topic: topic.to_string(),
+                    count: matching.len(),
+                    observations: matching,
+                });
             }
         }
 
         clusters
-            .into_iter()
-            .map(|(topic, observations)| Cluster {
-                count: observations.len(),
-                topic,
-                observations,
-            })
-            .collect()
-    }
-
-    pub fn advanced_search(
-        &self,
-        observations: Vec<Observation>,
-        query: &str,
-        priority: Option<&str>,
-        use_regex: bool,
-    ) -> Vec<Observation> {
-        observations
-            .into_iter()
-            .filter(|obs| {
-                // Priority filter
-                if let Some(p) = priority {
-                    if obs.priority != p {
-                        return false;
-                    }
-                }
-
-                // Query filter
-                if use_regex {
-                    if let Ok(re) = regex::Regex::new(query) {
-                        re.is_match(&obs.content)
-                    } else {
-                        false
-                    }
-                } else {
-                    obs.content.to_lowercase().contains(&query.to_lowercase())
-                }
-            })
-            .collect()
     }
 }
