@@ -1,21 +1,29 @@
 # Requirements for Observational Memory
 
-# Core dependencies (already in OpenClaw)
-# No additional dependencies needed for basic functionality!
+# Core dependencies
+# (no additional dependencies for basic functionality)
 
 # For concurrent processing
-# (no additional dependencies - uses stdlib threading)
+# (uses stdlib threading - no additional dependencies)
 
 # For vector search
 sentence-transformers>=5.0.0
 torch>=1.11.0
 numpy>=1.20.0
 
-# Optional: For testing
+# For Web UI
+streamlit>=1.54.0
+plotly>=6.5.0
+
+# For API (optional)
+fastapi>=0.129.0
+uvicorn>=0.41.0
+
+# For testing
 pytest>=7.0.0
 pytest-cov>=4.0.0
 
-# Optional: For development
+# For development
 black>=23.0.0
 flake8>=6.0.0
 mypy>=1.0.0
