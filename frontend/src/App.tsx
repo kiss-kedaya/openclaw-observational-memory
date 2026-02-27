@@ -1,6 +1,8 @@
 import { useState } from "react";
 import Dashboard from "./pages/Dashboard";
 import Sessions from "./pages/Sessions";
+import Search from "./pages/Search";
+import Analytics from "./pages/Analytics";
 import "./style.css";
 
 type Page = "dashboard" | "sessions" | "search" | "analytics" | "tools" | "memory" | "settings";
