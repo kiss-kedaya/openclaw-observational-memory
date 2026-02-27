@@ -13,7 +13,7 @@ jobs:
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
-            artifact: observational-memory-windows-x64.exe
+            artifact: observational-memory-windows-x64
           - os: macos-latest
             target: x86_64-apple-darwin
             artifact: observational-memory-macos-x64
@@ -24,18 +24,17 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       
       - name: Setup Rust
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@stable
         with:
-          toolchain: stable
-          target: ${{ matrix.target }}
+          targets: ${{ matrix.target }}
       
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
       
       - name: Build Frontend
         run: |
@@ -46,26 +45,24 @@ jobs:
       - name: Build Backend
         run: cargo build --release --target ${{ matrix.target }}
       
-      - name: Package
-        run: |
-          mkdir dist
-          cp target/${{ matrix.target }}/release/observational-memory* dist/
-          cp -r frontend/dist dist/static
-      
       - name: Upload Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
-          path: dist/
+          path: target/${{ matrix.target }}/release/observational-memory*
 
   release:
     needs: build
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
-      - uses: actions/download-artifact@v3
-      - name: Create Release
-        uses: softprops/action-gh-release@v1
+      - uses: actions/download-artifact@v4
         with:
-          files: |
-            **/*
+          path: artifacts
+          
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
