@@ -90,6 +90,25 @@ fn create_tables(conn: &Connection) -> Result<()> {
         [],
     )?;
     
+    // Phase 3: 创建 patterns 表
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS patterns (
+            id TEXT PRIMARY KEY,
+            type TEXT NOT NULL,
+            description TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            occurrences INTEGER NOT NULL,
+            created_at TEXT NOT NULL
+        )",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_patterns_type 
+         ON patterns(type)",
+        [],
+    )?;
+    
     // 创建 messages 表
     conn.execute(
         "CREATE TABLE IF NOT EXISTS messages (
@@ -111,5 +130,6 @@ fn create_tables(conn: &Connection) -> Result<()> {
     
     Ok(())
 }
+
 
 
