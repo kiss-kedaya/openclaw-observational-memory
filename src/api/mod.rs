@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use crate::db::{queries, DbPool};
 use crate::db::models::{Session, Message};
-use crate::core::{Observer, ToolSuggestionEngine, MemoryOptimizer, VectorSearchEngine, AISearchEngine, SummaryGenerator};
+use crate::core::{Observer, ToolSuggestionEngine, MemoryOptimizer, VectorSearchEngine, AISearchEngine, SummaryGenerator, KnowledgeGraphBuilder};
 
 pub struct AppState {
     pub db: DbPool,
@@ -70,6 +70,8 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/ai/search", post(ai_search))
         .route("/api/ai/summary/:session_id", get(generate_summary))
         .route("/api/ai/suggestions", post(get_suggestions))
+        .route("/api/knowledge/graph", get(get_knowledge_graph))
+        .route("/api/knowledge/related/:entity_id", get(get_related_entities))
         
         .with_state(state)
 }
@@ -369,6 +371,52 @@ async fn get_suggestions(
     Ok(Json(suggestions))
 }
 
+// 获取知识图谱
+async fn get_knowledge_graph(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<crate::core::KnowledgeGraph>, StatusCode> {
+    let builder = KnowledgeGraphBuilder::new();
+    
+    // 获取所有观察
+    let sessions = queries::list_sessions(&state.db, 100)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let mut all_texts = Vec::new();
+    for session in sessions {
+        let obs = queries::get_observations(&state.db, &session.id)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        all_texts.extend(obs.into_iter().map(|o| o.content));
+    }
+    
+    let graph = builder.build_from_texts(&all_texts);
+    Ok(Json(graph))
+}
+
+// 获取相关实体
+async fn get_related_entities(
+    State(state): State<Arc<AppState>>,
+    Path(entity_id): Path<String>,
+) -> Result<Json<Vec<crate::core::Node>>, StatusCode> {
+    let builder = KnowledgeGraphBuilder::new();
+    
+    // 先获取完整图谱
+    let sessions = queries::list_sessions(&state.db, 100)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let mut all_texts = Vec::new();
+    for session in sessions {
+        let obs = queries::get_observations(&state.db, &session.id)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        all_texts.extend(obs.into_iter().map(|o| o.content));
+    }
+    
+    let graph = builder.build_from_texts(&all_texts);
+    
+    // 查找相关实体
+    let related = builder.find_related_entities(&graph, &entity_id, 2);
+    Ok(Json(related))
+}
+
 async fn get_clusters(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<crate::core::Cluster>>, StatusCode> {
@@ -387,6 +435,8 @@ async fn get_clusters(
     let clusters = optimizer.cluster_by_topic(all_obs);
     Ok(Json(clusters))
 }
+
+
 
 
 
