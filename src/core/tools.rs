@@ -59,3 +59,55 @@ impl ToolSuggestionEngine {
         suggestions
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_detect_social_media() {
+        let engine = ToolSuggestionEngine::new();
+        let obs = Observation {
+            id: "1".to_string(),
+            session_id: "test".to_string(),
+            content: "Check this tweet: https://twitter.com/user/status/123".to_string(),
+            priority: "HIGH".to_string(),
+            created_at: chrono::Utc::now(),
+        };
+
+        let suggestions = engine.analyze(&obs);
+        assert!(!suggestions.is_empty());
+        assert_eq!(suggestions[0].tool, "agent-reach");
+    }
+
+    #[test]
+    fn test_detect_browser_need() {
+        let engine = ToolSuggestionEngine::new();
+        let obs = Observation {
+            id: "1".to_string(),
+            session_id: "test".to_string(),
+            content: "Need to login to the website".to_string(),
+            priority: "MEDIUM".to_string(),
+            created_at: chrono::Utc::now(),
+        };
+
+        let suggestions = engine.analyze(&obs);
+        assert!(!suggestions.is_empty());
+        assert_eq!(suggestions[0].tool, "agent-browser");
+    }
+
+    #[test]
+    fn test_no_match() {
+        let engine = ToolSuggestionEngine::new();
+        let obs = Observation {
+            id: "1".to_string(),
+            session_id: "test".to_string(),
+            content: "Just a normal observation".to_string(),
+            priority: "LOW".to_string(),
+            created_at: chrono::Utc::now(),
+        };
+
+        let suggestions = engine.analyze(&obs);
+        assert!(suggestions.is_empty());
+    }
+}

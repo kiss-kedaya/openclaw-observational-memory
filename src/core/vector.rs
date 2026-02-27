@@ -56,3 +56,48 @@ fn calculate_similarity(query: &str, content: &str) -> f32 {
 
     (matches as f32) / (query_words.len() as f32)
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_calculate_similarity() {
+        let query = "rust programming";
+        let content = "learning rust programming language";
+        let similarity = calculate_similarity(query, content);
+        assert!(similarity > 0.5);
+    }
+
+    #[test]
+    fn test_search_with_threshold() {
+        let engine = VectorSearchEngine::new();
+        let observations = vec![
+            Observation {
+                id: "1".to_string(),
+                session_id: "test".to_string(),
+                content: "rust programming tutorial".to_string(),
+                priority: "HIGH".to_string(),
+                created_at: chrono::Utc::now(),
+            },
+            Observation {
+                id: "2".to_string(),
+                session_id: "test".to_string(),
+                content: "python data science".to_string(),
+                priority: "LOW".to_string(),
+                created_at: chrono::Utc::now(),
+            },
+        ];
+
+        let results = engine.search(observations, "rust", 0.3);
+        assert_eq!(results.len(), 1);
+        assert_eq!(results[0].id, "1");
+    }
+
+    #[test]
+    fn test_empty_query() {
+        let engine = VectorSearchEngine::new();
+        let observations = vec![];
+        let results = engine.search(observations, "", 0.3);
+        assert_eq!(results.len(), 0);
+    }
+}

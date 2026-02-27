@@ -80,3 +80,73 @@ impl MemoryOptimizer {
         clusters
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_compress() {
+        let optimizer = MemoryOptimizer::new();
+        let observations = vec![
+            Observation {
+                id: "1".to_string(),
+                session_id: "test".to_string(),
+                content: "duplicate content".to_string(),
+                priority: "HIGH".to_string(),
+                created_at: chrono::Utc::now(),
+            },
+            Observation {
+                id: "2".to_string(),
+                session_id: "test".to_string(),
+                content: "duplicate content".to_string(),
+                priority: "HIGH".to_string(),
+                created_at: chrono::Utc::now(),
+            },
+            Observation {
+                id: "3".to_string(),
+                session_id: "test".to_string(),
+                content: "unique content".to_string(),
+                priority: "LOW".to_string(),
+                created_at: chrono::Utc::now(),
+            },
+        ];
+
+        let result = optimizer.compress(observations);
+        assert_eq!(result.original_count, 3);
+        assert_eq!(result.compressed_count, 2);
+        assert_eq!(result.removed, 1);
+    }
+
+    #[test]
+    fn test_cluster_by_topic() {
+        let optimizer = MemoryOptimizer::new();
+        let observations = vec![
+            Observation {
+                id: "1".to_string(),
+                session_id: "test".to_string(),
+                content: "installed new tool".to_string(),
+                priority: "HIGH".to_string(),
+                created_at: chrono::Utc::now(),
+            },
+            Observation {
+                id: "2".to_string(),
+                session_id: "test".to_string(),
+                content: "found an error in code".to_string(),
+                priority: "HIGH".to_string(),
+                created_at: chrono::Utc::now(),
+            },
+        ];
+
+        let clusters = optimizer.cluster_by_topic(observations);
+        assert!(!clusters.is_empty());
+    }
+
+    #[test]
+    fn test_empty_observations() {
+        let optimizer = MemoryOptimizer::new();
+        let result = optimizer.compress(vec![]);
+        assert_eq!(result.original_count, 0);
+        assert_eq!(result.compressed_count, 0);
+    }
+}
