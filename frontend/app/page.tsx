@@ -9,7 +9,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState({
     totalSessions: 0,
     totalObservations: 0,
-    totalTokens: 0,
+    totaltokens: 0,
   });
 
   useEffect(() => {
@@ -21,7 +21,7 @@ export default function Dashboard() {
       const sessionList = await sessionApi.list();
       setSessions(sessionList.data);
       
-      const totalTokens = sessionList.data.reduce((sum: number, s: Session) => sum + s.token_count, 0);
+      const totaltokens = sessionList.data.reduce((sum: number, s: Session) => sum + s.token_count, 0);
       
       let totalObs = 0;
       for (const s of sessionList.data) {
@@ -32,7 +32,7 @@ export default function Dashboard() {
       setStats({
         totalSessions: sessionList.data.length,
         totalObservations: totalObs,
-        totalTokens,
+        totaltokens,
       });
     } catch (error) {
       console.error("Failed to load data:", error);
@@ -41,32 +41,32 @@ export default function Dashboard() {
 
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-8">仪表盘</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-gray-500 text-sm font-medium">Total Sessions</h3>
+          <h3 className="text-gray-500 text-sm font-medium">总会话数</h3>
           <p className="text-3xl font-bold mt-2">{stats.totalSessions}</p>
         </div>
         
         <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-gray-500 text-sm font-medium">Total Observations</h3>
+          <h3 className="text-gray-500 text-sm font-medium">总观察数</h3>
           <p className="text-3xl font-bold mt-2">{stats.totalObservations}</p>
         </div>
         
         <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="text-gray-500 text-sm font-medium">Total Tokens</h3>
-          <p className="text-3xl font-bold mt-2">{stats.totalTokens.toLocaleString()}</p>
+          <h3 className="text-gray-500 text-sm font-medium">总 Token 数</h3>
+          <p className="text-3xl font-bold mt-2">{stats.totaltokens.toLocaleString()}</p>
         </div>
       </div>
       
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b">
-          <h2 className="text-xl font-semibold">Recent Sessions</h2>
+          <h2 className="text-xl font-semibold">最近会话</h2>
         </div>
         <div className="p-6">
           {sessions.length === 0 ? (
-            <p className="text-gray-500">No sessions yet</p>
+            <p className="text-gray-500">暂无会话</p>
           ) : (
             <div className="space-y-4">
               {sessions.slice(0, 5).map((session) => (
@@ -75,7 +75,7 @@ export default function Dashboard() {
                     <div>
                       <p className="font-medium">{session.id}</p>
                       <p className="text-sm text-gray-500">
-                        {session.message_count} messages • {session.token_count} tokens
+                        {session.message_count} 条消息 • {session.token_count} tokens
                       </p>
                     </div>
                     <p className="text-sm text-gray-500">

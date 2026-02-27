@@ -6,8 +6,8 @@ import Navigation from "@/components/Navigation";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "Observational Memory",
-  description: "AI Agent Memory System",
+  title: "观察记忆系统",
+  description: "AI Agent 记忆管理系统",
 };
 
 export default function RootLayout({

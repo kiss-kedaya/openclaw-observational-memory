@@ -1,10 +1,10 @@
 "use client";
 
-export default function analyticsPage() {
+export default function AnalyticsPage() {
   return (
     <div className="p-8">
-      <h1 className="text-3xl font-bold mb-8">analytics</h1>
-      <p>Page content coming soon...</p>
+      <h1 className="text-3xl font-bold mb-8">数据分析</h1>
+      <p className="text-gray-600">数据分析和可视化...</p>
     </div>
   );
 }

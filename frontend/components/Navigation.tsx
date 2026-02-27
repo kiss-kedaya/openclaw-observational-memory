@@ -4,13 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/", label: "Dashboard" },
-  { href: "/sessions", label: "Sessions" },
-  { href: "/search", label: "Search" },
-  { href: "/analytics", label: "Analytics" },
-  { href: "/tools", label: "Tools" },
-  { href: "/memory", label: "Memory" },
-  { href: "/settings", label: "Settings" },
+  { href: "/", label: "仪表盘" },
+  { href: "/sessions", label: "会话" },
+  { href: "/search", label: "搜索" },
+  { href: "/analytics", label: "分析" },
+  { href: "/tools", label: "工具" },
+  { href: "/memory", label: "记忆" },
+  { href: "/settings", label: "设置" },
 ];
 
 export default function Navigation() {
