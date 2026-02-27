@@ -4,6 +4,9 @@ export interface Session {
   updated_at: string;
   message_count: number;
   token_count: number;
+  tags?: string;
+  group_name?: string;
+  archived?: number;
 }
 
 export interface Observation {
@@ -12,6 +15,8 @@ export interface Observation {
   content: string;
   priority: "HIGH" | "MEDIUM" | "LOW";
   created_at: string;
+  tags?: string;
+  linked_observations?: string;
 }
 
 export interface Message {
