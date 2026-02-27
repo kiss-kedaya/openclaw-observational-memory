@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { searchApi } from "@/lib/api";
 
 interface SearchResult {
   observation_id: string;
@@ -22,15 +23,11 @@ export default function SearchPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/api/search", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, threshold }),
-      });
-      const data = await res.json();
-      setResults(data);
+      const res = await searchApi.search(query, threshold);
+      setResults(res.data);
     } catch (error) {
       console.error("搜索失败:", error);
+      setResults([]);
     } finally {
       setLoading(false);
     }

@@ -32,4 +32,18 @@ export const observationApi = {
     api.get<Observation[]>(`/observations/${sessionId}`),
 };
 
+export const searchApi = {
+  search: (query: string, threshold: number) =>
+    api.post("/search", { query, threshold }),
+};
+
+export const toolsApi = {
+  suggestions: () => api.get("/tools/suggestions"),
+};
+
+export const memoryApi = {
+  compress: () => api.post("/memory/compress"),
+  clusters: () => api.get("/memory/clusters"),
+};
+
 export default api;

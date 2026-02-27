@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { memoryApi } from "@/lib/api";
 
 interface CompressionResult {
   original_count: number;
@@ -24,11 +25,8 @@ export default function MemoryPage() {
   const compressMemory = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/api/memory/compress", {
-        method: "POST",
-      });
-      const data = await res.json();
-      setCompressionResult(data);
+      const res = await memoryApi.compress();
+      setCompressionResult(res.data);
     } catch (error) {
       console.error("压缩失败:", error);
     } finally {
@@ -39,9 +37,8 @@ export default function MemoryPage() {
   const loadClusters = async () => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/api/memory/clusters");
-      const data = await res.json();
-      setClusters(data);
+      const res = await memoryApi.clusters();
+      setClusters(res.data);
     } catch (error) {
       console.error("加载聚类失败:", error);
     } finally {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { toolsApi } from "@/lib/api";
 
 interface ToolSuggestion {
   tool: string;
@@ -20,11 +21,11 @@ export default function ToolsPage() {
 
   const loadSuggestions = async () => {
     try {
-      const res = await fetch("http://localhost:3000/api/tools/suggestions");
-      const data = await res.json();
-      setSuggestions(data);
+      const res = await toolsApi.suggestions();
+      setSuggestions(res.data);
     } catch (error) {
       console.error("加载工具建议失败:", error);
+      setSuggestions([]);
     } finally {
       setLoading(false);
     }
