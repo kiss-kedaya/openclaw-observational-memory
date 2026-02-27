@@ -21,7 +21,10 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from observational_memory.core import ObservationalMemoryManager
 from observational_memory.vector import VectorSearchManager
-from .i18n import I18n
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent))
+from i18n import I18n
 
 # Page config
 st.set_page_config(
@@ -96,7 +99,7 @@ with st.sidebar:
     st.markdown("---")
     
     # Navigation with icons
-    from .settings_page import render_settings_page
+    from settings_page import render_settings_page
 
 selected = option_menu(
         menu_title=i18n.t("app.title"),

@@ -10,6 +10,9 @@ import sys
 import shutil
 from datetime import datetime
 
+import sys
+from pathlib import Path
+
 def render_settings_page(i18n, lang, obs_manager, vector_manager, data_manager):
     """Render settings and management page"""
     
@@ -250,3 +253,4 @@ def render_settings_page(i18n, lang, obs_manager, vector_manager, data_manager):
                 max_value=50,
                 value=10
             )
+
