@@ -14,6 +14,12 @@ export interface Observation {
   created_at: string;
 }
 
+export interface Message {
+  role: string;
+  content: string;
+  timestamp: string;
+}
+
 export interface SearchResult {
   session_id: string;
   observation: string;
