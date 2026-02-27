@@ -1,79 +1,92 @@
-import { useState } from "react";
-import Dashboard from "./pages/Dashboard";
-import Sessions from "./pages/Sessions";
-import Search from "./pages/Search";
-import Analytics from "./pages/Analytics";
-import Tools from "./pages/Tools";
-import Memory from "./pages/Memory";
-import Settings from "./pages/Settings";
-import "./style.css";
+import { lazy, Suspense } from "react";
+import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 
-type Page = "dashboard" | "sessions" | "search" | "analytics" | "tools" | "memory" | "settings";
+// Lazy load pages
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Sessions = lazy(() => import("./pages/Sessions"));
+const Search = lazy(() => import("./pages/Search"));
+const Analytics = lazy(() => import("./pages/Analytics"));
+const Tools = lazy(() => import("./pages/Tools"));
+const Memory = lazy(() => import("./pages/Memory"));
+const Settings = lazy(() => import("./pages/Settings"));
+
+// Loading component
+const Loading = () => (
+  <div className="flex items-center justify-center h-screen">
+    <div className="text-xl text-gray-600">Loading...</div>
+  </div>
+);
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<Page>("dashboard");
-
-  const renderPage = () => {
-    switch (currentPage) {
-      case "dashboard":
-        return <Dashboard />;
-      case "sessions":
-        return <Sessions />;
-      case "search":
-        return <div className="p-6"><h1 className="text-3xl font-bold">Search (Coming Soon)</h1></div>;
-      case "analytics":
-        return <div className="p-6"><h1 className="text-3xl font-bold">Analytics (Coming Soon)</h1></div>;
-      case "tools":
-        return <div className="p-6"><h1 className="text-3xl font-bold">Tools (Coming Soon)</h1></div>;
-      case "memory":
-        return <div className="p-6"><h1 className="text-3xl font-bold">Memory (Coming Soon)</h1></div>;
-      case "settings":
-        return <div className="p-6"><h1 className="text-3xl font-bold">Settings (Coming Soon)</h1></div>;
-      default:
-        return <Dashboard />;
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      {/* Sidebar */}
-      <div className="fixed left-0 top-0 h-full w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 p-4">
-        <div className="mb-8">
-          <h1 className="text-2xl font-bold">Observational Memory</h1>
-          <p className="text-sm text-gray-500 dark:text-gray-400">v2.0.0 Rust</p>
-        </div>
-
-        <nav className="space-y-2">
-          {[
-            { id: "dashboard", label: "Dashboard", icon: "📊" },
-            { id: "sessions", label: "Sessions", icon: "📁" },
-            { id: "search", label: "Search", icon: "🔍" },
-            { id: "analytics", label: "Analytics", icon: "📈" },
-            { id: "tools", label: "Tools", icon: "🛠️" },
-            { id: "memory", label: "Memory", icon: "🧠" },
-            { id: "settings", label: "Settings", icon: "⚙️" },
-          ].map((item) => (
-            <button
-              key={item.id}
-              onClick={() => setCurrentPage(item.id as Page)}
-              className={`w-full text-left px-4 py-2 rounded transition ${
-                currentPage === item.id
-                  ? "bg-blue-500 text-white"
-                  : "hover:bg-gray-100 dark:hover:bg-gray-700"
-              }`}
-            >
-              <span className="mr-2">{item.icon}</span>
-              {item.label}
-            </button>
-          ))}
+    <Router>
+      <div className="min-h-screen bg-gray-50">
+        <nav className="bg-white shadow-sm">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="flex justify-between h-16">
+              <div className="flex space-x-8">
+                <Link
+                  to="/"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-900"
+                >
+                  Dashboard
+                </Link>
+                <Link
+                  to="/sessions"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  Sessions
+                </Link>
+                <Link
+                  to="/search"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  Search
+                </Link>
+                <Link
+                  to="/analytics"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  Analytics
+                </Link>
+                <Link
+                  to="/tools"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  Tools
+                </Link>
+                <Link
+                  to="/memory"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  Memory
+                </Link>
+                <Link
+                  to="/settings"
+                  className="inline-flex items-center px-1 pt-1 text-sm font-medium text-gray-500 hover:text-gray-900"
+                >
+                  Settings
+                </Link>
+              </div>
+            </div>
+          </div>
         </nav>
-      </div>
 
-      {/* Main Content */}
-      <div className="ml-64">
-        {renderPage()}
+        <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+          <Suspense fallback={<Loading />}>
+            <Routes>
+              <Route path="/" element={<Dashboard />} />
+              <Route path="/sessions" element={<Sessions />} />
+              <Route path="/search" element={<Search />} />
+              <Route path="/analytics" element={<Analytics />} />
+              <Route path="/tools" element={<Tools />} />
+              <Route path="/memory" element={<Memory />} />
+              <Route path="/settings" element={<Settings />} />
+            </Routes>
+          </Suspense>
+        </main>
       </div>
-    </div>
+    </Router>
   );
 }
 
