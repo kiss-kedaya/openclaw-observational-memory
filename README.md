@@ -2,6 +2,8 @@
 
 Mastra-inspired memory system for AI agents, completely rewritten in Rust + React for 10-100x performance improvement.
 
+[English](README.md) | [简体中文](README_CN.md)
+
 ## Features
 
 - **High Performance**: Rust backend with 10-100x speed improvement
