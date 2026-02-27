@@ -61,5 +61,24 @@ fn create_tables(conn: &Connection) -> Result<()> {
     let _ = conn.execute("ALTER TABLE observations ADD COLUMN tags TEXT DEFAULT '[]'", []);
     let _ = conn.execute("ALTER TABLE observations ADD COLUMN linked_observations TEXT DEFAULT '[]'", []);
     
+    // 创建 messages 表
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            timestamp TEXT NOT NULL,
+            FOREIGN KEY (session_id) REFERENCES sessions(id)
+        )",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_messages_session_id 
+         ON messages(session_id)",
+        [],
+    )?;
+    
     Ok(())
 }

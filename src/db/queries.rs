@@ -1,8 +1,8 @@
-use super::models::{Session, Observation};
+use super::models::{Session, Observation, Message};
 use super::DbPool;
 use anyhow::Result;
-// use rusqlite::OptionalExtension;
 use chrono::Utc;
+use rusqlite::params;
 
 pub fn create_session(pool: &DbPool, session_id: &str) -> Result<Session> {
     let conn = pool.get()?;
@@ -17,7 +17,7 @@ pub fn create_session(pool: &DbPool, session_id: &str) -> Result<Session> {
     };
     
     conn.execute(
-        "INSERT INTO sessions (id, created_at, updated_at, message_count, token_count)
+        "INSERT OR IGNORE INTO sessions (id, created_at, updated_at, message_count, token_count)
          VALUES (?1, ?2, ?3, ?4, ?5)",
         (
             &session.id,
@@ -29,6 +29,34 @@ pub fn create_session(pool: &DbPool, session_id: &str) -> Result<Session> {
     )?;
     
     Ok(session)
+}
+
+pub fn save_messages(
+    pool: &DbPool,
+    session_id: &str,
+    messages: &[Message],
+) -> Result<()> {
+    let conn = pool.get()?;
+    
+    for msg in messages {
+        conn.execute(
+            "INSERT INTO messages (session_id, role, content, timestamp) VALUES (?1, ?2, ?3, ?4)",
+            params![session_id, msg.role, msg.content, msg.timestamp],
+        )?;
+    }
+    
+    // 更新会话的 message_count 和 token_count
+    let message_count = messages.len() as i32;
+    let token_count: i32 = messages.iter()
+        .map(|m| (m.content.len() / 4) as i32)
+        .sum();
+    
+    conn.execute(
+        "UPDATE sessions SET message_count = message_count + ?1, token_count = token_count + ?2, updated_at = ?3 WHERE id = ?4",
+        params![message_count, token_count, Utc::now().to_rfc3339(), session_id],
+    )?;
+    
+    Ok(())
 }
 
 pub fn get_session(pool: &DbPool, session_id: &str) -> Result<Option<Session>> {
@@ -52,7 +80,7 @@ pub fn get_session(pool: &DbPool, session_id: &str) -> Result<Option<Session>> {
     Ok(session)
 }
 
-pub fn list_sessions(pool: &DbPool, limit: i32) -> Result<Vec<Session>> {
+pub fn list_sessions(pool: &DbPool, limit: usize) -> Result<Vec<Session>> {
     let conn = pool.get()?;
     
     let mut stmt = conn.prepare(
@@ -79,32 +107,24 @@ pub fn create_observation(
     session_id: &str,
     content: &str,
     priority: &str,
-) -> Result<Observation> {
+) -> Result<()> {
     let conn = pool.get()?;
-    let now = Utc::now();
     let id = uuid::Uuid::new_v4().to_string();
-    
-    let observation = Observation {
-        id: id.clone(),
-        session_id: session_id.to_string(),
-        content: content.to_string(),
-        priority: priority.to_string(),
-        created_at: now,
-    };
+    let now = Utc::now();
     
     conn.execute(
         "INSERT INTO observations (id, session_id, content, priority, created_at)
          VALUES (?1, ?2, ?3, ?4, ?5)",
         (
-            &observation.id,
-            &observation.session_id,
-            &observation.content,
-            &observation.priority,
-            observation.created_at.to_rfc3339(),
+            id,
+            session_id,
+            content,
+            priority,
+            now.to_rfc3339(),
         ),
     )?;
     
-    Ok(observation)
+    Ok(())
 }
 
 pub fn get_observations(pool: &DbPool, session_id: &str) -> Result<Vec<Observation>> {
