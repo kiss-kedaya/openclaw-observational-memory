@@ -36,7 +36,7 @@ struct SearchRequest {
 }
 
 fn default_threshold() -> f32 {
-    0.3
+    0.2  // 降低阈值以提高搜索召回率
 }
 
 #[derive(Debug, Deserialize)]
@@ -304,4 +304,5 @@ async fn get_clusters(
     let clusters = optimizer.cluster_by_topic(all_obs);
     Ok(Json(clusters))
 }
+
 

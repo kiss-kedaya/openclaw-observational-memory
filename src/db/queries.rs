@@ -148,3 +148,32 @@ pub fn get_observations(pool: &DbPool, session_id: &str) -> Result<Vec<Observati
     
     Ok(observations)
 }
+
+pub fn search_full_text(
+    pool: &DbPool,
+    query: &str,
+) -> Result<Vec<Observation>> {
+    let conn = pool.get()?;
+    
+    let mut stmt = conn.prepare(
+        "SELECT id, session_id, content, priority, created_at
+         FROM observations 
+         WHERE content LIKE ?1 
+         ORDER BY created_at DESC 
+         LIMIT 50"
+    )?;
+    
+    let pattern = format!("%{}%", query);
+    let observations = stmt.query_map([pattern], |row| {
+        Ok(Observation {
+            id: row.get(0)?,
+            session_id: row.get(1)?,
+            content: row.get(2)?,
+            priority: row.get(3)?,
+            created_at: row.get::<_, String>(4)?.parse().unwrap(),
+        })
+    })?
+    .collect::<Result<Vec<_>, _>>()?;
+    
+    Ok(observations)
+}
