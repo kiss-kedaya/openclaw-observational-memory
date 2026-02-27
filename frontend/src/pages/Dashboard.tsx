@@ -22,7 +22,7 @@ export default function Dashboard() {
 
       // Calculate statistics
       const totalTokens = sessionList.reduce(
-        (sum, s) => sum + s.token_count,
+        (sum: number, s: Session) => sum + s.token_count,
         0
       );
 
@@ -115,3 +115,4 @@ export default function Dashboard() {
     </div>
   );
 }
+
