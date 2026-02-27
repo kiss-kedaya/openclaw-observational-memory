@@ -3,6 +3,9 @@ import Dashboard from "./pages/Dashboard";
 import Sessions from "./pages/Sessions";
 import Search from "./pages/Search";
 import Analytics from "./pages/Analytics";
+import Tools from "./pages/Tools";
+import Memory from "./pages/Memory";
+import Settings from "./pages/Settings";
 import "./style.css";
 
 type Page = "dashboard" | "sessions" | "search" | "analytics" | "tools" | "memory" | "settings";
