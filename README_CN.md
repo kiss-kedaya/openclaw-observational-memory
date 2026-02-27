@@ -123,6 +123,7 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 - [问题反馈](https://github.com/kiss-kedaya/openclaw-observational-memory/issues)
 - [Python 版本](https://github.com/kiss-kedaya/openclaw-observational-memory/tree/python-legacy)
 - [API 文档](API_CN.md)
+- [项目路线图](ROADMAP_CN.md)
 - [更新日志](CHANGELOG_CN.md)
 
 ## 📝 更新日志

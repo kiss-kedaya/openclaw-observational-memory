@@ -65,6 +65,10 @@ npm run dev
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed architecture documentation.
 
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for the project roadmap and future plans.
+
 ## API Documentation
 
 See [API.md](API.md) for complete API reference.
