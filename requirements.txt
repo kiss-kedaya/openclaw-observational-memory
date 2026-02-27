@@ -1,0 +1,13 @@
+# Requirements for Observational Memory
+
+# Core dependencies (already in OpenClaw)
+# No additional dependencies needed!
+
+# Optional: For testing
+pytest>=7.0.0
+pytest-cov>=4.0.0
+
+# Optional: For development
+black>=23.0.0
+flake8>=6.0.0
+mypy>=1.0.0
