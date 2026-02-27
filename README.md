@@ -1,5 +1,7 @@
 # Observational Memory v2.0 (Rust + React)
 
+English | [简体中文](README_CN.md)
+
 Mastra-inspired memory system for AI agents, completely rewritten in Rust + React for 10-100x performance improvement.
 
 ## Features
