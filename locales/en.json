@@ -54,5 +54,6 @@
   "table.session_id": "Session ID",
   "table.observations": "Observations",
   "table.tokens": "Tokens",
-  "table.last_updated": "Last Updated"
+  "table.last_updated": "Last Updated",
+  "app.footer": "Built with Streamlit"
 }

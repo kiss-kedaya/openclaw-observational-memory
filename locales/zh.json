@@ -54,5 +54,6 @@
   "table.session_id": "会话 ID",
   "table.observations": "观察数",
   "table.tokens": "Token 数",
-  "table.last_updated": "最后更新"
+  "table.last_updated": "最后更新",
+  "app.footer": "基于 Streamlit 构建"
 }
