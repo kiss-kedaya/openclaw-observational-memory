@@ -1,0 +1,89 @@
+use axum::{
+    extract::{Path, State},
+    http::StatusCode,
+    response::Json,
+    routing::get,
+    Router,
+};
+use serde::{Deserialize, Serialize};
+use std::sync::Arc;
+
+use crate::db::{queries, DbPool};
+use crate::db::models::{Session, Message};
+use crate::core::Observer;
+
+pub struct AppState {
+    pub db: DbPool,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct CreateSessionRequest {
+    pub session_id: String,
+    pub messages: Vec<Message>,
+}
+
+#[derive(Debug, Serialize)]
+pub struct CreateSessionResponse {
+    pub session: Session,
+    pub observations: Vec<String>,
+}
+
+pub fn create_router(state: Arc<AppState>) -> Router {
+    Router::new()
+        .route("/api/sessions", get(list_sessions).post(create_session))
+        .route("/api/sessions/:id", get(get_session))
+        .route("/api/observations/:session_id", get(get_observations))
+        .with_state(state)
+}
+
+async fn list_sessions(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<Session>>, StatusCode> {
+    queries::list_sessions(&state.db, 50)
+        .map(Json)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}
+
+async fn get_session(
+    State(state): State<Arc<AppState>>,
+    Path(id): Path<String>,
+) -> Result<Json<Session>, StatusCode> {
+    queries::get_session(&state.db, &id)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+        .map(Json)
+        .ok_or(StatusCode::NOT_FOUND)
+}
+
+async fn create_session(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateSessionRequest>,
+) -> Result<Json<CreateSessionResponse>, StatusCode> {
+    // Create session
+    let session = queries::create_session(&state.db, &req.session_id)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    // Extract observations
+    let observations = Observer::extract_observations(&req.messages)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    // Store observations
+    for obs in &observations {
+        let priority = Observer::calculate_priority(obs);
+        queries::create_observation(&state.db, &req.session_id, obs, &priority)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    }
+    
+    Ok(Json(CreateSessionResponse {
+        session,
+        observations,
+    }))
+}
+
+async fn get_observations(
+    State(state): State<Arc<AppState>>,
+    Path(session_id): Path<String>,
+) -> Result<Json<Vec<crate::db::models::Observation>>, StatusCode> {
+    queries::get_observations(&state.db, &session_id)
+        .map(Json)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
+}

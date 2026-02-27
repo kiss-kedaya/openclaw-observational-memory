@@ -1,0 +1,71 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: observational-memory-windows-x64.exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: observational-memory-macos-x64
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: observational-memory-linux-x64
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      
+      - name: Build Frontend
+        run: |
+          cd frontend
+          npm install
+          npm run build
+      
+      - name: Build Backend
+        run: cargo build --release --target ${{ matrix.target }}
+      
+      - name: Package
+        run: |
+          mkdir dist
+          cp target/${{ matrix.target }}/release/observational-memory* dist/
+          cp -r frontend/dist dist/static
+      
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v3
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            **/*

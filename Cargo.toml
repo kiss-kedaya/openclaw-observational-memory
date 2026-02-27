@@ -1,0 +1,43 @@
+[package]
+name = "observational-memory"
+version = "2.0.0"
+edition = "2021"
+authors = ["OpenClaw Community"]
+description = "Mastra-inspired memory system for AI agents"
+license = "MIT"
+
+[dependencies]
+# Web Framework
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["fs", "cors"] }
+
+# Database
+rusqlite = { version = "0.32", features = ["bundled"] }
+r2d2 = "0.8"
+r2d2_sqlite = "0.25"
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Search
+tantivy = "0.22"
+
+# Utilities
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+anyhow = "1.0"
+thiserror = "2.0"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+
+[dev-dependencies]
+reqwest = { version = "0.12", features = ["json"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
