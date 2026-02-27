@@ -1,0 +1,25 @@
+async fn create_session(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<CreateSessionRequest>,
+) -> Result<Json<CreateSessionResponse>, StatusCode> {
+    let session = queries::create_session(&state.db, &req.session_id)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    // 保存消息
+    queries::save_messages(&state.db, &req.session_id, &req.messages)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let observations = Observer::extract_observations(&req.messages)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    for obs in &observations {
+        let priority = Observer::calculate_priority(obs);
+        queries::create_observation(&state.db, &req.session_id, obs, &priority)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    }
+    
+    Ok(Json(CreateSessionResponse {
+        session,
+        observations,
+    }))
+}

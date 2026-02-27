@@ -95,6 +95,10 @@ async fn create_session(
     let session = queries::create_session(&state.db, &req.session_id)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
+    // 保存消息
+    queries::save_messages(&state.db, &req.session_id, &req.messages)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
     let observations = Observer::extract_observations(&req.messages)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
@@ -300,3 +304,4 @@ async fn get_clusters(
     let clusters = optimizer.cluster_by_topic(all_obs);
     Ok(Json(clusters))
 }
+
