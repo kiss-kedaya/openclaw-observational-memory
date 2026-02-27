@@ -8,6 +8,21 @@
 
 [English](README.md) | [简体中文](README_CN.md)
 
+## OpenClaw 自动集成
+
+### 一键安装
+
+```bash
+python install_openclaw.py
+openclaw gateway restart
+```
+
+完成！所有会话自动记录和观察。
+
+详见 [OpenClaw Integration Guide](OPENCLAW_INTEGRATION.md)
+
+---
+
 ## 快速开始
 
 ### 安装
