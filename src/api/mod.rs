@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use crate::db::{queries, DbPool};
 use crate::db::models::{Session, Message};
-use crate::core::{Observer, ToolSuggestionEngine, MemoryOptimizer, VectorSearchEngine, AISearchEngine, SummaryGenerator, KnowledgeGraphBuilder};
+use crate::core::{Observer, ToolSuggestionEngine, MemoryOptimizer, VectorSearchEngine, AISearchEngine, SummaryGenerator, KnowledgeGraphBuilder, DataExporter, BackupManager};
 
 pub struct AppState {
     pub db: DbPool,
@@ -72,6 +72,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/ai/suggestions", post(get_suggestions))
         .route("/api/knowledge/graph", get(get_knowledge_graph))
         .route("/api/knowledge/related/:entity_id", get(get_related_entities))
+        
         
         .with_state(state)
 }
@@ -435,6 +436,8 @@ async fn get_clusters(
     let clusters = optimizer.cluster_by_topic(all_obs);
     Ok(Json(clusters))
 }
+
+
 
 
 
