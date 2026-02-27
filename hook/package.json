@@ -1,0 +1,12 @@
+{
+  "name": "openclaw-hook-observational-memory",
+  "version": "1.0.0",
+  "description": "OpenClaw Hook for Observational Memory - Auto record all conversations",
+  "main": "handler.js",
+  "keywords": ["openclaw", "hook", "memory", "observational"],
+  "author": "OpenClaw Community",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}
