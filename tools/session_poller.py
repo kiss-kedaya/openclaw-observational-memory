@@ -11,17 +11,30 @@ import requests
 from pathlib import Path
 from datetime import datetime
 
-OPENCLAW_SESSIONS_DIR = Path("C:/Users/34438/.openclaw/sessions")
+# 修复：监控所有 agent 的 sessions 目录
+OPENCLAW_SESSIONS_DIRS = [
+    Path("C:/Users/34438/.openclaw/agents/main/sessions"),
+    Path("C:/Users/34438/.openclaw/agents/openclaw-expert/sessions"),
+    Path("C:/Users/34438/.openclaw/agents/full-stack-architect/sessions"),
+]
+
 MEMORY_API = "http://localhost:3000/api"
 POLL_INTERVAL = 60  # 60 秒检查一次
 
 def get_session_files():
     """获取所有会话文件"""
-    if not OPENCLAW_SESSIONS_DIR.exists():
-        print(f"[Session Poller] ERROR - Sessions directory not found: {OPENCLAW_SESSIONS_DIR}")
-        return []
+    all_files = []
     
-    return list(OPENCLAW_SESSIONS_DIR.glob("**/*.jsonl"))
+    for sessions_dir in OPENCLAW_SESSIONS_DIRS:
+        if not sessions_dir.exists():
+            print(f"[Session Poller] WARN - Sessions directory not found: {sessions_dir}")
+            continue
+        
+        files = list(sessions_dir.glob("**/*.jsonl"))
+        print(f"[Session Poller] Found {len(files)} files in {sessions_dir.name}")
+        all_files.extend(files)
+    
+    return all_files
 
 def parse_session_file(file_path):
     """解析会话文件"""
@@ -66,7 +79,10 @@ def sync_session(session_id, messages):
 def poll_sessions():
     """轮询会话文件"""
     print(f"[Session Poller] Starting... Polling every {POLL_INTERVAL}s")
-    print(f"[Session Poller] Watching: {OPENCLAW_SESSIONS_DIR}")
+    print(f"[Session Poller] Watching {len(OPENCLAW_SESSIONS_DIRS)} directories:")
+    for sessions_dir in OPENCLAW_SESSIONS_DIRS:
+        print(f"  - {sessions_dir}")
+    print()
     
     processed = set()
     
@@ -79,7 +95,7 @@ def poll_sessions():
                 time.sleep(POLL_INTERVAL)
                 continue
             
-            print(f"[Session Poller] Found {len(files)} session files")
+            print(f"[Session Poller] Total files found: {len(files)}")
             
             synced_count = 0
             for file_path in files:
