@@ -1,0 +1,103 @@
+# Add to app.py before Footer
+
+# Data Management Page
+elif page == "💾 Data Management":
+    st.title("💾 Data Management")
+    
+    from data_manager import DataManager
+    data_manager = DataManager(Path.cwd())
+    
+    tab1, tab2, tab3 = st.tabs(["Export", "Import", "Backup"])
+    
+    with tab1:
+        st.subheader("Export Sessions")
+        
+        observations_dir = Path.cwd() / "memory" / "observations"
+        if observations_dir.exists():
+            session_files = list(observations_dir.glob("*.md"))
+            session_ids = [f.stem for f in session_files]
+            
+            col1, col2 = st.columns(2)
+            with col1:
+                export_format = st.selectbox("Format", ["JSON", "CSV"])
+            with col2:
+                export_all = st.checkbox("Export all sessions")
+            
+            if not export_all:
+                selected_session = st.selectbox("Select session", session_ids)
+            
+            if st.button("Export"):
+                try:
+                    if export_all:
+                        paths = data_manager.export_all_json()
+                        st.success(f"Exported {len(paths)} sessions to exports/")
+                    else:
+                        if export_format == "JSON":
+                            path = data_manager.export_session_json(selected_session)
+                        else:
+                            path = data_manager.export_session_csv(selected_session)
+                        st.success(f"Exported to: {path}")
+                except Exception as e:
+                    st.error(f"Export failed: {e}")
+    
+    with tab2:
+        st.subheader("Import Sessions")
+        
+        uploaded_file = st.file_uploader("Choose a JSON file", type=["json"])
+        
+        if uploaded_file and st.button("Import"):
+            try:
+                # Save uploaded file temporarily
+                temp_path = Path.cwd() / "temp_import.json"
+                temp_path.write_bytes(uploaded_file.read())
+                
+                session_id = data_manager.import_session_json(temp_path)
+                temp_path.unlink()
+                
+                st.success(f"Imported session: {session_id}")
+                st.rerun()
+            except Exception as e:
+                st.error(f"Import failed: {e}")
+    
+    with tab3:
+        st.subheader("Backup & Restore")
+        
+        col1, col2 = st.columns(2)
+        
+        with col1:
+            st.markdown("### Create Backup")
+            backup_name = st.text_input("Backup name (optional)", "")
+            
+            if st.button("Create Backup"):
+                try:
+                    path = data_manager.create_backup(backup_name if backup_name else None)
+                    st.success(f"Backup created: {path.name}")
+                except Exception as e:
+                    st.error(f"Backup failed: {e}")
+        
+        with col2:
+            st.markdown("### Restore Backup")
+            backups = data_manager.list_backups()
+            
+            if backups:
+                backup_names = [b["name"] for b in backups]
+                selected_backup = st.selectbox("Select backup", backup_names)
+                overwrite = st.checkbox("Overwrite existing data")
+                
+                if st.button("Restore"):
+                    try:
+                        backup_path = Path(backups[backup_names.index(selected_backup)]["path"])
+                        data_manager.restore_backup(backup_path, overwrite=overwrite)
+                        st.success("Backup restored successfully")
+                        st.rerun()
+                    except Exception as e:
+                        st.error(f"Restore failed: {e}")
+            else:
+                st.info("No backups available")
+        
+        st.markdown("### Available Backups")
+        if backups:
+            backup_df = pd.DataFrame(backups)
+            st.dataframe(backup_df, use_container_width=True)
+        else:
+            st.info("No backups found")

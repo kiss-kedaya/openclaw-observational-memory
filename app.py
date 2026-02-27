@@ -38,7 +38,7 @@ obs_manager, vector_manager = init_managers()
 
 # Sidebar
 st.sidebar.title("🧠 Observational Memory")
-page = st.sidebar.radio("Navigation", ["📊 Dashboard", "📝 Sessions", "🔍 Search", "📈 Analytics"])
+page = st.sidebar.radio("Navigation", ["📊 Dashboard", "📝 Sessions", "🔍 Search", "📈 Analytics", "💾 Data Management"])
 
 # Dashboard Page
 if page == "📊 Dashboard":
