@@ -1,0 +1,93 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { sessionApi, observationApi } from "@/lib/api";
+import type { Session } from "@/types";
+
+export default function Dashboard() {
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [stats, setStats] = useState({
+    totalSessions: 0,
+    totalObservations: 0,
+    totalTokens: 0,
+  });
+
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const sessionList = await sessionApi.list();
+      setSessions(sessionList.data);
+      
+      const totalTokens = sessionList.data.reduce((sum: number, s: Session) => sum + s.token_count, 0);
+      
+      let totalObs = 0;
+      for (const s of sessionList.data) {
+        const obsList = await observationApi.list(s.id);
+        totalObs += obsList.data.length;
+      }
+      
+      setStats({
+        totalSessions: sessionList.data.length,
+        totalObservations: totalObs,
+        totalTokens,
+      });
+    } catch (error) {
+      console.error("Failed to load data:", error);
+    }
+  };
+
+  return (
+    <div className="p-8">
+      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+      
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-gray-500 text-sm font-medium">Total Sessions</h3>
+          <p className="text-3xl font-bold mt-2">{stats.totalSessions}</p>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-gray-500 text-sm font-medium">Total Observations</h3>
+          <p className="text-3xl font-bold mt-2">{stats.totalObservations}</p>
+        </div>
+        
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="text-gray-500 text-sm font-medium">Total Tokens</h3>
+          <p className="text-3xl font-bold mt-2">{stats.totalTokens.toLocaleString()}</p>
+        </div>
+      </div>
+      
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-6 py-4 border-b">
+          <h2 className="text-xl font-semibold">Recent Sessions</h2>
+        </div>
+        <div className="p-6">
+          {sessions.length === 0 ? (
+            <p className="text-gray-500">No sessions yet</p>
+          ) : (
+            <div className="space-y-4">
+              {sessions.slice(0, 5).map((session) => (
+                <div key={session.id} className="border-b pb-4 last:border-0">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">{session.id}</p>
+                      <p className="text-sm text-gray-500">
+                        {session.message_count} messages • {session.token_count} tokens
+                      </p>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      {new Date(session.created_at).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -21,7 +21,7 @@ async fn main() -> Result<()> {
     
     // Create router
     let app = api::create_router(state)
-        .nest_service("/", ServeDir::new("frontend/dist"))
+        .nest_service("/", ServeDir::new("frontend/out"))
         .layer(CorsLayer::permissive());
     
     // Start server
