@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>中文编码测试</title>
+</head>
+<body>
+    <h1>中文编码测试</h1>
+    <div id="result"></div>
+    
+    <script>
+        fetch('http://localhost:3000/api/observations/test-chinese-20260227195756')
+            .then(res => res.json())
+            .then(data => {
+                const div = document.getElementById('result');
+                if (data.length > 0) {
+                    div.innerHTML = '<h2>观察记录:</h2><p>' + data[0].content + '</p>';
+                    
+                    // 检查是否有乱码
+                    if (data[0].content.includes('�')) {
+                        div.innerHTML += '<p style="color: red;">ERROR: 检测到乱码</p>';
+                    } else {
+                        div.innerHTML += '<p style="color: green;">OK: 中文显示正常</p>';
+                    }
+                } else {
+                    div.innerHTML = '<p>没有观察记录</p>';
+                }
+            })
+            .catch(err => {
+                document.getElementById('result').innerHTML = '<p style="color: red;">ERROR: ' + err + '</p>';
+            });
+    </script>
+</body>
+</html>

@@ -20,6 +20,9 @@ pub fn init_db<P: AsRef<Path>>(db_path: P) -> Result<DbPool> {
 }
 
 fn create_tables(conn: &Connection) -> Result<()> {
+    // 设置 UTF-8 编码
+    conn.execute("PRAGMA encoding = 'UTF-8'", [])?;
+    
     conn.execute(
         "CREATE TABLE IF NOT EXISTS sessions (
             id TEXT PRIMARY KEY,
@@ -82,3 +85,4 @@ fn create_tables(conn: &Connection) -> Result<()> {
     
     Ok(())
 }
+
