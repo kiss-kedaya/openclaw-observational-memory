@@ -12,9 +12,17 @@ import json
 
 def find_openclaw_dir():
     """Find OpenClaw installation directory"""
+    import os
+    
+    # Try environment variable first
+    if "OPENCLAW_HOME" in os.environ:
+        path = Path(os.environ["OPENCLAW_HOME"])
+        if path.exists():
+            return path
+    """Find OpenClaw installation directory"""
     # Common locations
     locations = [
-        Path.home() / ".openclaw",
+        Path(os.path.expanduser("~")) / ".openclaw",
         Path("C:/Users") / Path.home().name / ".openclaw",
         Path("/home") / Path.home().name / ".openclaw",
     ]

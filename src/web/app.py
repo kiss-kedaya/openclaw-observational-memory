@@ -96,7 +96,9 @@ with st.sidebar:
     st.markdown("---")
     
     # Navigation with icons
-    selected = option_menu(
+    from .settings_page import render_settings_page
+
+selected = option_menu(
         menu_title=i18n.t("app.title"),
         options=[
             i18n.t("dashboard.title"),

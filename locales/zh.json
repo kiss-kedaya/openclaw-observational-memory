@@ -55,5 +55,10 @@
   "table.observations": "观察数",
   "table.tokens": "Token 数",
   "table.last_updated": "最后更新",
-  "app.footer": "基于 Streamlit 构建"
+  "app.footer": "基于 Streamlit 构建",
+  "settings.title": "设置与管理",
+  "settings.openclaw": "OpenClaw 集成",
+  "settings.data": "数据管理",
+  "settings.status": "系统状态",
+  "settings.config": "配置"
 }
