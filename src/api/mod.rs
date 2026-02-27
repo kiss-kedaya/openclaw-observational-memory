@@ -36,7 +36,7 @@ struct SearchRequest {
 }
 
 fn default_threshold() -> f32 {
-    0.2  // 降低阈值以提高搜索召回率
+    0.1  // 降低阈值以提高搜索召回率
 }
 
 #[derive(Debug, Deserialize)]
@@ -242,7 +242,7 @@ async fn ai_search(
     let intent = ai_engine.parse_query(&req.query);
     
     // 执行基础搜索
-    let sessions = queries::list_sessions(&state.db, 100)
+    let sessions = queries::list_sessions(&state.db, 20)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
     let mut all_obs = Vec::new();
@@ -253,7 +253,7 @@ async fn ai_search(
     }
     
     let engine = VectorSearchEngine::new();
-    let mut results = engine.search(all_obs, &req.query, req.threshold);
+    let mut results = engine.search(all_obs, &req.query, 0.1);  // 降低阈值
     
     // AI 优化排序
     let mut scored_results: Vec<(String, f32)> = results
@@ -283,7 +283,7 @@ async fn search(
     State(state): State<Arc<AppState>>,
     Json(req): Json<SearchRequest>,
 ) -> Result<Json<Vec<crate::core::SearchResult>>, StatusCode> {
-    let sessions = queries::list_sessions(&state.db, 100)
+    let sessions = queries::list_sessions(&state.db, 20)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
     let mut all_obs = Vec::new();
@@ -325,7 +325,7 @@ async fn compress_memory(
 ) -> Result<Json<crate::core::CompressionResult>, StatusCode> {
     let optimizer = MemoryOptimizer::new();
     
-    let sessions = queries::list_sessions(&state.db, 100)
+    let sessions = queries::list_sessions(&state.db, 20)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
     let mut all_obs = Vec::new();
@@ -379,14 +379,14 @@ async fn get_knowledge_graph(
     let builder = KnowledgeGraphBuilder::new();
     
     // 获取所有观察
-    let sessions = queries::list_sessions(&state.db, 100)
+    let sessions = queries::list_sessions(&state.db, 20)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
     let mut all_texts = Vec::new();
     for session in sessions {
         let obs = queries::get_observations(&state.db, &session.id)
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-        all_texts.extend(obs.into_iter().map(|o| o.content));
+        all_texts.extend(obs.into_iter().take(10).map(|o| o.content));
     }
     
     let graph = builder.build_from_texts(&all_texts);
@@ -401,14 +401,14 @@ async fn get_related_entities(
     let builder = KnowledgeGraphBuilder::new();
     
     // 先获取完整图谱
-    let sessions = queries::list_sessions(&state.db, 100)
+    let sessions = queries::list_sessions(&state.db, 20)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
     let mut all_texts = Vec::new();
     for session in sessions {
         let obs = queries::get_observations(&state.db, &session.id)
             .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-        all_texts.extend(obs.into_iter().map(|o| o.content));
+        all_texts.extend(obs.into_iter().take(10).map(|o| o.content));
     }
     
     let graph = builder.build_from_texts(&all_texts);
@@ -423,7 +423,7 @@ async fn get_clusters(
 ) -> Result<Json<Vec<crate::core::Cluster>>, StatusCode> {
     let optimizer = MemoryOptimizer::new();
     
-    let sessions = queries::list_sessions(&state.db, 100)
+    let sessions = queries::list_sessions(&state.db, 20)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
     let mut all_obs = Vec::new();
