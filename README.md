@@ -160,8 +160,8 @@ context = manager.get_context_for_session(session_id)
 | Priority System | ✅ | ✅ | Complete |
 | Temporal Anchoring | ✅ | ✅ | Complete |
 | Auto Compression | ✅ | ✅ | Complete |
-| Context Injection | ✅ | 🟡 | Partial |
-| Multi-thread | ✅ | ❌ | Future |
+| Context Injection | ✅ | ✅ | Complete |
+| Multi-thread | ✅ | ✅ | Complete |
 
 ## 📖 Documentation
 
