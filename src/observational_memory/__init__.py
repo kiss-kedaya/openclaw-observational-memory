@@ -10,8 +10,13 @@ from .core import ObservationalMemoryManager, ObservationExtractor
 from .concurrent import ConcurrentObservationalProcessor, ProcessingTask
 from .vector import VectorSearchManager, SearchResult
 from .data_manager import DataManager
+from .tool_suggestion import ToolSuggestionEngine, ToolSuggestion
+from .memory_optimizer import MemoryOptimizer
 
 __all__ = [
+    "ToolSuggestionEngine",
+    "ToolSuggestion",
+    "MemoryOptimizer",
     "ObservationalMemoryManager",
     "ObservationExtractor",
     "ConcurrentObservationalProcessor",

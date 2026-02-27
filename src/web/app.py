@@ -100,6 +100,8 @@ with st.sidebar:
     
     # Navigation with icons
     from settings_page import render_settings_page
+from tool_suggestions_page import render_tool_suggestions_page
+from memory_optimization_page import render_memory_optimization_page
 
 selected = option_menu(
         menu_title=i18n.t("app.title"),
