@@ -6,6 +6,14 @@ authors = ["OpenClaw Community"]
 description = "Mastra-inspired memory system for AI agents"
 license = "MIT"
 
+[lib]
+name = "observational_memory"
+path = "src/lib.rs"
+
+[[bin]]
+name = "observational-memory"
+path = "src/main.rs"
+
 [dependencies]
 # Web Framework
 axum = "0.7"

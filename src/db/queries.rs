@@ -1,7 +1,7 @@
 use super::models::{Session, Observation};
 use super::DbPool;
 use anyhow::Result;
-use rusqlite::OptionalExtension;
+// use rusqlite::OptionalExtension;
 use chrono::Utc;
 
 pub fn create_session(pool: &DbPool, session_id: &str) -> Result<Session> {
