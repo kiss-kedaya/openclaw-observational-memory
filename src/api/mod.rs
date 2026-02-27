@@ -2,7 +2,7 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
     response::Json,
-    routing::{get, post},
+    routing::{get, post, delete},
     Router,
 };
 use serde::{Deserialize, Serialize};
@@ -39,10 +39,29 @@ fn default_threshold() -> f32 {
     0.3
 }
 
+#[derive(Debug, Deserialize)]
+pub struct AddTagRequest {
+    pub tag: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct RemoveTagRequest {
+    pub tag: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct SetGroupRequest {
+    pub group: String,
+}
+
 pub fn create_router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/api/sessions", get(list_sessions).post(create_session))
         .route("/api/sessions/:id", get(get_session))
+        .route("/api/sessions/:id/tags", post(add_tag).delete(remove_tag))
+        .route("/api/sessions/:id/group", post(set_group))
+        .route("/api/sessions/:id/archive", post(archive_session))
+        .route("/api/sessions/:id/unarchive", post(unarchive_session))
         .route("/api/observations/:session_id", get(get_observations))
         .route("/api/search", post(search))
         .route("/api/tools/suggestions", get(tool_suggestions))
@@ -89,6 +108,109 @@ async fn create_session(
         session,
         observations,
     }))
+}
+
+async fn add_tag(
+    State(state): State<Arc<AppState>>,
+    Path(session_id): Path<String>,
+    Json(req): Json<AddTagRequest>,
+) -> Result<Json<()>, StatusCode> {
+    let conn = state.db.get().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let current_tags: String = conn
+        .query_row(
+            "SELECT COALESCE(tags, ''[]'') FROM sessions WHERE id = ?1",
+            [&session_id],
+            |row| row.get(0),
+        )
+        .unwrap_or_else(|_| "[]".to_string());
+    
+    let mut tags: Vec<String> = serde_json::from_str(&current_tags).unwrap_or_default();
+    
+    if !tags.contains(&req.tag) {
+        tags.push(req.tag);
+    }
+    
+    conn.execute(
+        "UPDATE sessions SET tags = ?1 WHERE id = ?2",
+        [serde_json::to_string(&tags).unwrap(), session_id],
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    Ok(Json(()))
+}
+
+async fn remove_tag(
+    State(state): State<Arc<AppState>>,
+    Path(session_id): Path<String>,
+    Json(req): Json<RemoveTagRequest>,
+) -> Result<Json<()>, StatusCode> {
+    let conn = state.db.get().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let current_tags: String = conn
+        .query_row(
+            "SELECT COALESCE(tags, ''[]'') FROM sessions WHERE id = ?1",
+            [&session_id],
+            |row| row.get(0),
+        )
+        .unwrap_or_else(|_| "[]".to_string());
+    
+    let mut tags: Vec<String> = serde_json::from_str(&current_tags).unwrap_or_default();
+    tags.retain(|t| t != &req.tag);
+    
+    conn.execute(
+        "UPDATE sessions SET tags = ?1 WHERE id = ?2",
+        [serde_json::to_string(&tags).unwrap(), session_id],
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    Ok(Json(()))
+}
+
+async fn set_group(
+    State(state): State<Arc<AppState>>,
+    Path(session_id): Path<String>,
+    Json(req): Json<SetGroupRequest>,
+) -> Result<Json<()>, StatusCode> {
+    let conn = state.db.get().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    conn.execute(
+        "UPDATE sessions SET group_name = ?1 WHERE id = ?2",
+        [req.group, session_id],
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    Ok(Json(()))
+}
+
+async fn archive_session(
+    State(state): State<Arc<AppState>>,
+    Path(session_id): Path<String>,
+) -> Result<Json<()>, StatusCode> {
+    let conn = state.db.get().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    conn.execute(
+        "UPDATE sessions SET archived = 1 WHERE id = ?1",
+        [session_id],
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    Ok(Json(()))
+}
+
+async fn unarchive_session(
+    State(state): State<Arc<AppState>>,
+    Path(session_id): Path<String>,
+) -> Result<Json<()>, StatusCode> {
+    let conn = state.db.get().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    conn.execute(
+        "UPDATE sessions SET archived = 0 WHERE id = ?1",
+        [session_id],
+    )
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    Ok(Json(()))
 }
 
 async fn get_observations(

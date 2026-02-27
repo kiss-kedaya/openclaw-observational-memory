@@ -25,6 +25,16 @@ export const sessionApi = {
   get: (id: string) => api.get<Session>(`/sessions/${id}`),
   create: (data: CreateSessionRequest) =>
     api.post<CreateSessionResponse>("/sessions", data),
+  addTag: (sessionId: string, tag: string) =>
+    api.post(`/sessions/${sessionId}/tags`, { tag }),
+  removeTag: (sessionId: string, tag: string) =>
+    api.delete(`/sessions/${sessionId}/tags`, { data: { tag } }),
+  setGroup: (sessionId: string, group: string) =>
+    api.post(`/sessions/${sessionId}/group`, { group }),
+  archive: (sessionId: string) =>
+    api.post(`/sessions/${sessionId}/archive`),
+  unarchive: (sessionId: string) =>
+    api.post(`/sessions/${sessionId}/unarchive`),
 };
 
 export const observationApi = {
