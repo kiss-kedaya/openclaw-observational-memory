@@ -2,6 +2,7 @@ mod api;
 mod core;
 mod db;
 mod memory;
+mod monitoring;
 
 use anyhow::Result;
 use std::sync::Arc;
@@ -21,7 +22,8 @@ async fn main() -> Result<()> {
     let state = Arc::new(api::AppState { db: db_pool });
     
     // Create router
-    let app = api::create_router(state)
+    let app = api::create_router(state.clone())
+        .merge(monitoring::create_monitoring_router(state))
         .nest_service("/", ServeDir::new("frontend/out"))
         .layer(CorsLayer::permissive());
     
@@ -33,4 +35,5 @@ async fn main() -> Result<()> {
     
     Ok(())
 }
+
 
