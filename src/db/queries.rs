@@ -31,6 +31,42 @@ pub fn create_session(pool: &DbPool, session_id: &str) -> Result<Session> {
     Ok(session)
 }
 
+/// 估算文本的 token 数量
+/// 使用更准确的估算方法：
+/// - 英文：按空格分词，每个词约 1.3 tokens
+/// - 中文：每个字符约 1.5-2 tokens
+/// - 标点和空格：约 1 token
+fn estimate_tokens(text: &str) -> i32 {
+    let mut token_count = 0;
+    
+    // 统计中文字符
+    let chinese_chars = text.chars().filter(|c| {
+        let code = *c as u32;
+        (0x4E00..=0x9FFF).contains(&code) || // CJK Unified Ideographs
+        (0x3400..=0x4DBF).contains(&code) || // CJK Extension A
+        (0x20000..=0x2A6DF).contains(&code)  // CJK Extension B
+    }).count();
+    
+    // 中文字符：每个字符约 2 tokens
+    token_count += (chinese_chars as f32 * 2.0) as i32;
+    
+    // 统计英文单词
+    let words: Vec<&str> = text.split_whitespace().collect();
+    let english_words = words.iter().filter(|w| {
+        w.chars().all(|c| c.is_ascii_alphanumeric() || c.is_ascii_punctuation())
+    }).count();
+    
+    // 英文单词：每个词约 1.3 tokens
+    token_count += (english_words as f32 * 1.3) as i32;
+    
+    // 标点符号和其他字符
+    let other_chars = text.len() - chinese_chars - words.join(" ").len();
+    token_count += (other_chars as f32 * 0.5) as i32;
+    
+    // 最小值为 1
+    token_count.max(1)
+}
+
 pub fn save_messages(
     pool: &DbPool,
     session_id: &str,
@@ -48,7 +84,7 @@ pub fn save_messages(
     // 更新会话的 message_count 和 token_count
     let message_count = messages.len() as i32;
     let token_count: i32 = messages.iter()
-        .map(|m| (m.content.len() / 4) as i32)
+        .map(|m| estimate_tokens(&m.content))
         .sum();
     
     conn.execute(
@@ -185,5 +221,3 @@ pub fn search_full_text(
     
     Ok(observations)
 }
-
-

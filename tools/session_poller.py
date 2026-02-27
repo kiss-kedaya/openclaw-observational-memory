@@ -36,6 +36,26 @@ def get_session_files():
     
     return all_files
 
+def extract_text_from_content(content):
+    """从 content 中提取文本"""
+    if isinstance(content, str):
+        return content
+    elif isinstance(content, list):
+        # content 是数组，提取所有 text 字段
+        texts = []
+        for item in content:
+            if isinstance(item, dict):
+                if item.get('type') == 'text' and 'text' in item:
+                    texts.append(item['text'])
+                elif 'text' in item:
+                    texts.append(item['text'])
+        return '\n'.join(texts)
+    elif isinstance(content, dict):
+        # content 是对象，尝试提取 text 字段
+        if 'text' in content:
+            return content['text']
+    return ''
+
 def parse_session_file(file_path):
     """解析会话文件"""
     messages = []
@@ -44,12 +64,20 @@ def parse_session_file(file_path):
             for line in f:
                 try:
                     entry = json.loads(line)
-                    if entry.get('type') == 'message':
-                        messages.append({
-                            'role': entry.get('role', 'user'),
-                            'content': entry.get('content', ''),
-                            'timestamp': entry.get('timestamp', datetime.now().isoformat())
-                        })
+                    if entry.get('type') == 'message' and 'message' in entry:
+                        msg = entry['message']
+                        role = msg.get('role', 'user')
+                        content = msg.get('content', '')
+                        
+                        # 提取文本内容
+                        text_content = extract_text_from_content(content)
+                        
+                        if text_content:  # 只添加非空消息
+                            messages.append({
+                                'role': role,
+                                'content': text_content,
+                                'timestamp': entry.get('timestamp', datetime.now().isoformat())
+                            })
                 except json.JSONDecodeError:
                     continue
     except Exception as e:
