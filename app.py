@@ -155,7 +155,7 @@ if selected == i18n.t("dashboard.title"):
                 })
             
             df = pd.DataFrame(session_data)
-            st.dataframe(df, use_container_width=True, hide_index=True)
+            st.dataframe(df, width="stretch", hide_index=True)
         else:
             st.info(i18n.t("dashboard.no_data") if "dashboard.no_data" in i18n.translations[lang] else "No observations found.")
 
@@ -188,14 +188,14 @@ elif selected == i18n.t("sessions.title"):
         
         # Display sessions with animation
         for file in page_files:
-            with st.expander(f"{i18n.t(\"sessions.session_prefix\")} {file.stem}"):
+            with st.expander(f"{i18n.t('sessions.session_prefix')} {file.stem}"):
                 content = file.read_text(encoding="utf-8")
                 st.text(content)
                 
                 if st.button(i18n.t("sessions.delete"), key=f"del_{file.stem}"):
                     file.unlink()
                     vector_manager.delete_session(file.stem)
-                    st.success(f"{i18n.t(\"sessions.deleted\")} {file.stem}")
+                    st.success(f"{i18n.t('sessions.deleted')} {file.stem}")
                     st.rerun()
     else:
         st.info(i18n.t("sessions.no_data") if "sessions.no_data" in i18n.translations[lang] else "No sessions found.")
@@ -256,7 +256,7 @@ elif selected == i18n.t("analytics.title"):
             names=list(priority_counts.keys()),
             title=i18n.t("analytics.priority_distribution")
         )
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         
         # Timeline
         st.subheader(i18n.t("analytics.timeline"))
@@ -278,7 +278,7 @@ elif selected == i18n.t("analytics.title"):
         df = df.groupby("Date")[i18n.t("table.observations")].sum().reset_index()
         
         fig = px.line(df, x="Date", y=i18n.t("table.observations"), title=i18n.t("analytics.timeline"))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
         
         # Token usage
         st.subheader(i18n.t("analytics.token_usage"))
@@ -293,7 +293,7 @@ elif selected == i18n.t("analytics.title"):
         
         df = pd.DataFrame(token_data)
         fig = px.bar(df, x="Session", y=i18n.t("table.tokens"), title=i18n.t("analytics.token_usage"))
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     else:
         st.info(i18n.t("analytics.no_data"))
 
@@ -301,3 +301,4 @@ elif selected == i18n.t("analytics.title"):
 st.sidebar.markdown("---")
 st.sidebar.markdown("**Observational Memory v2.0**")
 st.sidebar.markdown("Built with Streamlit")
+
