@@ -21,7 +21,7 @@ pub async fn deduplicate_observation(
 }
 
 /// 搜索相似观察
-async fn search_similar_observations(
+pub async fn search_similar_observations(
     pool: &DbPool,
     content: &str,
     threshold: f32,
@@ -168,3 +168,4 @@ pub struct Conflict {
     pub resolved: bool,
     pub created_at: chrono::DateTime<Utc>,
 }
+

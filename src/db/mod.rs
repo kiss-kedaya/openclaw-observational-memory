@@ -109,6 +109,42 @@ fn create_tables(conn: &Connection) -> Result<()> {
         [],
     )?;
     
+    // Phase 4: 创建 archives 和 summaries 表
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS archives (
+            id TEXT PRIMARY KEY,
+            session_id TEXT NOT NULL,
+            content TEXT NOT NULL,
+            priority TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            archived_at TEXT NOT NULL
+        )",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_archives_archived_at 
+         ON archives(archived_at)",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS summaries (
+            id TEXT PRIMARY KEY,
+            content TEXT NOT NULL,
+            period_start TEXT NOT NULL,
+            period_end TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_summaries_period 
+         ON summaries(period_start, period_end)",
+        [],
+    )?;
+    
     // 创建 messages 表
     conn.execute(
         "CREATE TABLE IF NOT EXISTS messages (
@@ -130,6 +166,7 @@ fn create_tables(conn: &Connection) -> Result<()> {
     
     Ok(())
 }
+
 
 
 
