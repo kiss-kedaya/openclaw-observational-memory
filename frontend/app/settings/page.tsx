@@ -1,15 +1,73 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { sessionApi } from "@/lib/api";
 
 export default function SettingsPage() {
   const [apiUrl, setApiUrl] = useState("http://localhost:3000/api");
   const [saved, setSaved] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const saveSettings = () => {
     localStorage.setItem("apiUrl", apiUrl);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const res = await sessionApi.list();
+      const data = JSON.stringify(res.data, null, 2);
+      const blob = new Blob([data], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `observational-memory-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("导出失败:", error);
+      alert("导出失败");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      let successCount = 0;
+      for (const session of data) {
+        try {
+          await sessionApi.create({
+            session_id: session.id,
+            messages: [],
+          });
+          successCount++;
+        } catch (error) {
+          console.error(`导入会话 ${session.id} 失败:`, error);
+        }
+      }
+      
+      alert(`导入成功 ${successCount}/${data.length} 个会话`);
+    } catch (error) {
+      console.error("导入失败:", error);
+      alert("导入失败：文件格式错误");
+    } finally {
+      setImporting(false);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   return (
@@ -35,7 +93,7 @@ export default function SettingsPage() {
             </div>
             <button
               onClick={saveSettings}
-              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600"
+              className="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors"
             >
               {saved ? "已保存 ✓" : "保存设置"}
             </button>
@@ -48,25 +106,41 @@ export default function SettingsPage() {
           </div>
           <div className="p-6 space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".json"
+                  onChange={handleImport}
+                  className="hidden"
+                  id="import-file"
+                />
+                <label
+                  htmlFor="import-file"
+                  className={`block text-center bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 cursor-pointer transition-colors ${
+                    importing ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                >
+                  {importing ? "导入中..." : "导入数据"}
+                </label>
+              </div>
               <button
-                disabled
-                className="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 disabled:bg-gray-300"
+                onClick={handleExport}
+                disabled={exporting}
+                className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
-                导入数据
+                {exporting ? "导出中..." : "导出数据"}
               </button>
               <button
                 disabled
-                className="bg-blue-500 text-white px-6 py-3 rounded-lg hover:bg-blue-600 disabled:bg-gray-300"
-              >
-                导出数据
-              </button>
-              <button
-                disabled
-                className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 disabled:bg-gray-300"
+                className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
               >
                 备份数据
               </button>
             </div>
+            <p className="text-sm text-gray-500">
+              导入/导出功能可以帮助您备份和迁移数据
+            </p>
           </div>
         </div>
 
