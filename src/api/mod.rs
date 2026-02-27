@@ -10,7 +10,7 @@ use std::sync::Arc;
 
 use crate::db::{queries, DbPool};
 use crate::db::models::{Session, Message};
-use crate::core::{Observer, ToolSuggestionEngine, MemoryOptimizer, VectorSearchEngine};
+use crate::core::{Observer, ToolSuggestionEngine, MemoryOptimizer, VectorSearchEngine, AISearchEngine, SummaryGenerator};
 
 pub struct AppState {
     pub db: DbPool,
@@ -67,6 +67,9 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/tools/suggestions", get(tool_suggestions))
         .route("/api/memory/compress", post(compress_memory))
         .route("/api/memory/clusters", get(get_clusters))
+        .route("/api/ai/search", post(ai_search))
+        .route("/api/ai/summary/:session_id", get(generate_summary))
+        .route("/api/ai/suggestions", post(get_suggestions))
         
         .with_state(state)
 }
@@ -227,6 +230,52 @@ async fn get_observations(
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
 
+// AI 辅助搜索
+async fn ai_search(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<SearchRequest>,
+) -> Result<Json<Vec<crate::core::SearchResult>>, StatusCode> {
+    let ai_engine = AISearchEngine::new();
+    let intent = ai_engine.parse_query(&req.query);
+    
+    // 执行基础搜索
+    let sessions = queries::list_sessions(&state.db, 100)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let mut all_obs = Vec::new();
+    for session in sessions {
+        let obs = queries::get_observations(&state.db, &session.id)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        all_obs.extend(obs);
+    }
+    
+    let engine = VectorSearchEngine::new();
+    let mut results = engine.search(all_obs, &req.query, req.threshold);
+    
+    // AI 优化排序
+    let mut scored_results: Vec<(String, f32)> = results
+        .iter()
+        .map(|r| (r.content.clone(), r.similarity))
+        .collect();
+    
+    ai_engine.rank_results(&mut scored_results, &intent);
+    
+    // 转换回 SearchResult
+    let optimized_results: Vec<_> = scored_results
+        .into_iter()
+        .zip(results.iter())
+        .map(|((_, score), r)| crate::core::SearchResult {
+            id: r.id.clone(),
+            session_id: r.session_id.clone(),
+            content: r.content.clone(),
+            similarity: score,
+            priority: r.priority.clone(),
+        })
+        .collect();
+    
+    Ok(Json(optimized_results))
+}
+
 async fn search(
     State(state): State<Arc<AppState>>,
     Json(req): Json<SearchRequest>,
@@ -287,6 +336,39 @@ async fn compress_memory(
     Ok(Json(result))
 }
 
+// 生成会话摘要
+async fn generate_summary(
+    State(state): State<Arc<AppState>>,
+    Path(session_id): Path<String>,
+) -> Result<Json<crate::core::Summary>, StatusCode> {
+    let generator = SummaryGenerator::new();
+    
+    // 获取会话消息
+    let conn = state.db.get().map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let mut stmt = conn.prepare(
+        "SELECT content FROM messages WHERE session_id = ? ORDER BY timestamp"
+    ).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let messages: Vec<String> = stmt.query_map([&session_id], |row| {
+        row.get(0)
+    }).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
+    .collect::<Result<Vec<_>, _>>()
+    .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let summary = generator.generate_session_summary(&messages);
+    Ok(Json(summary))
+}
+
+// 获取搜索建议
+async fn get_suggestions(
+    State(_state): State<Arc<AppState>>,
+    Json(req): Json<SearchRequest>,
+) -> Result<Json<Vec<String>>, StatusCode> {
+    let ai_engine = AISearchEngine::new();
+    let suggestions = ai_engine.generate_suggestions(&req.query);
+    Ok(Json(suggestions))
+}
+
 async fn get_clusters(
     State(state): State<Arc<AppState>>,
 ) -> Result<Json<Vec<crate::core::Cluster>>, StatusCode> {
@@ -305,6 +387,10 @@ async fn get_clusters(
     let clusters = optimizer.cluster_by_topic(all_obs);
     Ok(Json(clusters))
 }
+
+
+
+
 
 
 
