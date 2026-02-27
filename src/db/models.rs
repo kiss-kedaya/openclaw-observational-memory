@@ -17,6 +17,16 @@ pub struct Observation {
     pub content: String,
     pub priority: String,
     pub created_at: DateTime<Utc>,
+    #[serde(default)]
+    pub access_count: i32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub last_accessed_at: Option<DateTime<Utc>>,
+    #[serde(default = "default_merged_from")]
+    pub merged_from: String,
+}
+
+fn default_merged_from() -> String {
+    "[]".to_string()
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,4 +49,14 @@ pub struct ToolSuggestion {
     pub reason: String,
     pub confidence: f32,
     pub context: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Conflict {
+    pub id: String,
+    pub old_id: String,
+    pub new_id: String,
+    pub confidence: f32,
+    pub resolved: bool,
+    pub created_at: DateTime<Utc>,
 }

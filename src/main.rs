@@ -1,6 +1,7 @@
 mod api;
 mod core;
 mod db;
+mod memory;
 
 use anyhow::Result;
 use std::sync::Arc;
@@ -32,3 +33,4 @@ async fn main() -> Result<()> {
     
     Ok(())
 }
+

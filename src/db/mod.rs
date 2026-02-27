@@ -64,6 +64,32 @@ fn create_tables(conn: &Connection) -> Result<()> {
     let _ = conn.execute("ALTER TABLE observations ADD COLUMN tags TEXT DEFAULT '[]'", []);
     let _ = conn.execute("ALTER TABLE observations ADD COLUMN linked_observations TEXT DEFAULT '[]'", []);
     
+    // Phase 1: 添加去重和冲突检测字段
+    let _ = conn.execute("ALTER TABLE observations ADD COLUMN access_count INTEGER DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE observations ADD COLUMN last_accessed_at TEXT", []);
+    let _ = conn.execute("ALTER TABLE observations ADD COLUMN merged_from TEXT DEFAULT '[]'", []);
+    
+    // 创建 conflicts 表
+    conn.execute(
+        "CREATE TABLE IF NOT EXISTS conflicts (
+            id TEXT PRIMARY KEY,
+            old_id TEXT NOT NULL,
+            new_id TEXT NOT NULL,
+            confidence REAL NOT NULL,
+            resolved INTEGER DEFAULT 0,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (old_id) REFERENCES observations(id),
+            FOREIGN KEY (new_id) REFERENCES observations(id)
+        )",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_conflicts_resolved 
+         ON conflicts(resolved)",
+        [],
+    )?;
+    
     // 创建 messages 表
     conn.execute(
         "CREATE TABLE IF NOT EXISTS messages (
@@ -85,4 +111,5 @@ fn create_tables(conn: &Connection) -> Result<()> {
     
     Ok(())
 }
+
 

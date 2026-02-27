@@ -131,7 +131,7 @@ pub fn get_observations(pool: &DbPool, session_id: &str) -> Result<Vec<Observati
     let conn = pool.get()?;
     
     let mut stmt = conn.prepare(
-        "SELECT id, session_id, content, priority, created_at
+        "SELECT id, session_id, content, priority, created_at, access_count, last_accessed_at, merged_from
          FROM observations WHERE session_id = ?1 ORDER BY created_at DESC"
     )?;
     
@@ -142,6 +142,10 @@ pub fn get_observations(pool: &DbPool, session_id: &str) -> Result<Vec<Observati
             content: row.get(2)?,
             priority: row.get(3)?,
             created_at: row.get::<_, String>(4)?.parse().unwrap(),
+            access_count: row.get(5).unwrap_or(0),
+            last_accessed_at: row.get::<_, Option<String>>(6)?
+                .and_then(|s| s.parse().ok()),
+            merged_from: row.get(7).unwrap_or_else(|_| "[]".to_string()),
         })
     })?
     .collect::<Result<Vec<_>, _>>()?;
@@ -156,7 +160,7 @@ pub fn search_full_text(
     let conn = pool.get()?;
     
     let mut stmt = conn.prepare(
-        "SELECT id, session_id, content, priority, created_at
+        "SELECT id, session_id, content, priority, created_at, access_count, last_accessed_at, merged_from
          FROM observations 
          WHERE content LIKE ?1 
          ORDER BY created_at DESC 
@@ -171,9 +175,15 @@ pub fn search_full_text(
             content: row.get(2)?,
             priority: row.get(3)?,
             created_at: row.get::<_, String>(4)?.parse().unwrap(),
+            access_count: row.get(5).unwrap_or(0),
+            last_accessed_at: row.get::<_, Option<String>>(6)?
+                .and_then(|s| s.parse().ok()),
+            merged_from: row.get(7).unwrap_or_else(|_| "[]".to_string()),
         })
     })?
     .collect::<Result<Vec<_>, _>>()?;
     
     Ok(observations)
 }
+
+

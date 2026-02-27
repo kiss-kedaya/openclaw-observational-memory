@@ -67,7 +67,7 @@ pub fn create_router(state: Arc<AppState>) -> Router {
         .route("/api/tools/suggestions", get(tool_suggestions))
         .route("/api/memory/compress", post(compress_memory))
         .route("/api/memory/clusters", get(get_clusters))
-        .route("/api/health", get(health_check))
+        
         .with_state(state)
 }
 
@@ -305,6 +305,7 @@ async fn get_clusters(
     let clusters = optimizer.cluster_by_topic(all_obs);
     Ok(Json(clusters))
 }
+
 
 
 
