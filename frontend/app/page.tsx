@@ -1,10 +1,22 @@
 "use client";
 
+import { useRouter } from "next/navigation";
+
 import { useState, useEffect } from "react";
 import { sessionApi, observationApi } from "@/lib/api";
 import type { Session } from "@/types";
 
 export default function Dashboard() {
+  const router = useRouter();
+  
+  useEffect(() => {
+    // 检查是否完成首次设置
+    const hasCompletedSetup = localStorage.getItem("hasCompletedSetup");
+    if (!hasCompletedSetup) {
+      router.push("/welcome");
+    }
+  }, [router]);
+  
   const [sessions, setSessions] = useState<Session[]>([]);
   const [stats, setStats] = useState({
     totalSessions: 0,
@@ -91,3 +103,4 @@ export default function Dashboard() {
     </div>
   );
 }
+

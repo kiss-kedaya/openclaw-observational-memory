@@ -164,8 +164,69 @@ fn create_tables(conn: &Connection) -> Result<()> {
         [],
     )?;
     
+    // v2.1.0: 性能优化索引
+    
+    // 1. sessions 表索引
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sessions_updated_at 
+         ON sessions(updated_at DESC)",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sessions_archived 
+         ON sessions(archived)",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_sessions_group 
+         ON sessions(group_name)",
+        [],
+    )?;
+    
+    // 2. observations 表索引
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_observations_created_at 
+         ON observations(created_at DESC)",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_observations_priority 
+         ON observations(priority)",
+        [],
+    )?;
+    
+    // 3. messages 表索引
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_messages_timestamp 
+         ON messages(timestamp DESC)",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_messages_role 
+         ON messages(role)",
+        [],
+    )?;
+    
+    // 4. 复合索引（常用查询组合）
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_observations_session_created 
+         ON observations(session_id, created_at DESC)",
+        [],
+    )?;
+    
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_messages_session_timestamp 
+         ON messages(session_id, timestamp DESC)",
+        [],
+    )?;
+    
     Ok(())
 }
+
 
 
 
