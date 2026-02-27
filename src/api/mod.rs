@@ -87,3 +87,86 @@ async fn get_observations(
         .map(Json)
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)
 }
+
+use crate::core::{ToolSuggestionEngine, MemoryOptimizer};
+
+#[derive(Debug, Deserialize)]
+struct SearchRequest {
+    query: String,
+    #[serde(default = "default_threshold")]
+    threshold: f32,
+}
+
+fn default_threshold() -> f32 {
+    0.3
+}
+
+async fn search(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<SearchRequest>,
+) -> Result<Json<Vec<crate::core::SearchResult>>, StatusCode> {
+    // Placeholder - implement actual search
+    Ok(Json(vec![]))
+}
+
+async fn tool_suggestions(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<crate::core::ToolSuggestion>>, StatusCode> {
+    let engine = ToolSuggestionEngine::new();
+    
+    // Get recent observations
+    let sessions = queries::list_sessions(&state.db, 10)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let mut suggestions = Vec::new();
+    for session in sessions {
+        let obs = queries::get_observations(&state.db, &session.id)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        
+        for o in obs {
+            suggestions.extend(engine.analyze(&o));
+        }
+    }
+    
+    Ok(Json(suggestions))
+}
+
+async fn compress_memory(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<crate::core::CompressionResult>, StatusCode> {
+    let optimizer = MemoryOptimizer::new();
+    
+    // Get all observations
+    let sessions = queries::list_sessions(&state.db, 100)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let mut all_obs = Vec::new();
+    for session in sessions {
+        let obs = queries::get_observations(&state.db, &session.id)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        all_obs.extend(obs);
+    }
+    
+    let result = optimizer.compress(all_obs);
+    Ok(Json(result))
+}
+
+async fn get_clusters(
+    State(state): State<Arc<AppState>>,
+) -> Result<Json<Vec<crate::core::Cluster>>, StatusCode> {
+    let optimizer = MemoryOptimizer::new();
+    
+    // Get all observations
+    let sessions = queries::list_sessions(&state.db, 100)
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    let mut all_obs = Vec::new();
+    for session in sessions {
+        let obs = queries::get_observations(&state.db, &session.id)
+            .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+        all_obs.extend(obs);
+    }
+    
+    let clusters = optimizer.cluster_by_topic(all_obs);
+    Ok(Json(clusters))
+}
