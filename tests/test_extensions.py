@@ -7,8 +7,8 @@ Run with: pytest test_extensions.py -v
 import pytest
 from pathlib import Path
 import shutil
-from plugin_system import PluginManager, ObservationPlugin
-from i18n import I18n, create_chinese_locale
+from observational_memory.plugin_system import PluginManager, ObservationPlugin
+from web.i18n import I18n, create_chinese_locale
 
 
 class TestPluginSystem:
@@ -21,7 +21,7 @@ class TestPluginSystem:
         
         # Create test plugin
         test_plugin = '''
-from plugin_system import ObservationPlugin
+from observational_memory.plugin_system import ObservationPlugin
 from typing import Dict, Any, Optional
 
 class TestPlugin(ObservationPlugin):

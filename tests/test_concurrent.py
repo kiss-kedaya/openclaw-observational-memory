@@ -10,7 +10,7 @@ import time
 import queue
 from pathlib import Path
 from datetime import datetime
-from observational_memory_concurrent import (
+from observational_memory.concurrent import (
     ConcurrentObservationalProcessor,
     ThreadSafeObservationalMemoryManager,
     ProcessingTask,

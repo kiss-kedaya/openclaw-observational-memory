@@ -21,8 +21,8 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from observational_memory import ObservationalMemoryManager
-from observational_memory_vector import VectorSearchManager
+from .core import ObservationalMemoryManager
+from .vector import VectorSearchManager
 
 
 class DataManager:

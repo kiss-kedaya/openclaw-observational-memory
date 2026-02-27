@@ -23,7 +23,7 @@ from dataclasses import dataclass
 from datetime import datetime
 import time
 
-from observational_memory import ObservationalMemoryManager, ObservationExtractor
+from .core import ObservationalMemoryManager, ObservationExtractor
 
 
 # Configure logging

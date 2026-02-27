@@ -8,7 +8,7 @@ import pytest
 from pathlib import Path
 import json
 import shutil
-from data_manager import DataManager
+from observational_memory.data_manager import DataManager
 
 
 class TestDataManager:

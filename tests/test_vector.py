@@ -7,7 +7,7 @@ Run with: pytest test_vector_search.py -v
 import pytest
 from pathlib import Path
 import shutil
-from observational_memory_vector import (
+from observational_memory.vector import (
     VectorSearchManager,
     SearchResult,
     SENTENCE_TRANSFORMERS_AVAILABLE

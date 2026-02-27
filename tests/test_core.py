@@ -7,7 +7,7 @@ Run with: pytest test_observational_memory.py -v
 import pytest
 from pathlib import Path
 from datetime import datetime
-from observational_memory import (
+from observational_memory.core import (
     ObservationExtractor,
     ObservationalMemoryManager
 )

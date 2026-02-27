@@ -19,9 +19,9 @@ import sys
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from observational_memory import ObservationalMemoryManager
-from observational_memory_vector import VectorSearchManager
-from i18n import I18n
+from observational_memory.core import ObservationalMemoryManager
+from observational_memory.vector import VectorSearchManager
+from .i18n import I18n
 
 # Page config
 st.set_page_config(
