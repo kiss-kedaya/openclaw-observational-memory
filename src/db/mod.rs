@@ -26,7 +26,10 @@ fn create_tables(conn: &Connection) -> Result<()> {
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             message_count INTEGER NOT NULL,
-            token_count INTEGER NOT NULL
+            token_count INTEGER NOT NULL,
+            tags TEXT DEFAULT ''[]'',
+            group_name TEXT,
+            archived INTEGER DEFAULT 0
         )",
         [],
     )?;
@@ -38,6 +41,8 @@ fn create_tables(conn: &Connection) -> Result<()> {
             content TEXT NOT NULL,
             priority TEXT NOT NULL,
             created_at TEXT NOT NULL,
+            tags TEXT DEFAULT ''[]'',
+            linked_observations TEXT DEFAULT ''[]'',
             FOREIGN KEY (session_id) REFERENCES sessions(id)
         )",
         [],
@@ -48,6 +53,13 @@ fn create_tables(conn: &Connection) -> Result<()> {
          ON observations(session_id)",
         [],
     )?;
+    
+    // 添加新字段到现有表（如果不存在）
+    let _ = conn.execute("ALTER TABLE sessions ADD COLUMN tags TEXT DEFAULT ''[]''", []);
+    let _ = conn.execute("ALTER TABLE sessions ADD COLUMN group_name TEXT", []);
+    let _ = conn.execute("ALTER TABLE sessions ADD COLUMN archived INTEGER DEFAULT 0", []);
+    let _ = conn.execute("ALTER TABLE observations ADD COLUMN tags TEXT DEFAULT ''[]''", []);
+    let _ = conn.execute("ALTER TABLE observations ADD COLUMN linked_observations TEXT DEFAULT ''[]''", []);
     
     Ok(())
 }
