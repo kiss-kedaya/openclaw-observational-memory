@@ -19,7 +19,7 @@ class I18n:
     Internationalization manager
     """
     
-    def __init__(self, locales_dir: Path, default_locale: str = "en"):
+    def __init__(self, locales_dir: Path, default_locale: str = "zh"):
         self.locales_dir = locales_dir
         self.default_locale = default_locale
         self.current_locale = default_locale

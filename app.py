@@ -86,9 +86,9 @@ obs_manager, vector_manager, i18n = init_managers()
 with st.sidebar:
     st.markdown("### Language / 语言")
     lang = st.selectbox(
-        "Select Language",
-        options=["en", "zh"],
-        format_func=lambda x: "English" if x == "en" else "简体中文",
+        i18n.t("language.select"),
+        options=["zh", "en"],
+        format_func=lambda x: "简体中文" if x == "zh" else "English",
         key="language"
     )
     i18n.set_locale(lang)
@@ -113,8 +113,8 @@ with st.sidebar:
 if selected == i18n.t("dashboard.title"):
     st.title(i18n.t("dashboard.title"))
     
-    with st.spinner(i18n.t("dashboard.loading") if "dashboard.loading" in i18n.translations[lang] else "Loading..."):
-        observations_dir = Path.cwd() / "memory" / "observations"
+    with st.spinner(i18n.t("dashboard.loading") if "dashboard.loading" in i18n.translations[lang] else i18n.t("common.loading")):
+        observations_dir = Path.cwd() / "memory" / i18n.t("table.observations")
         
         if observations_dir.exists():
             session_files = list(observations_dir.glob("*.md"))
@@ -148,10 +148,10 @@ if selected == i18n.t("dashboard.title"):
                 content = file.read_text(encoding="utf-8")
                 lines = [l for l in content.split("\n") if l.strip() and not l.startswith("Date:")]
                 session_data.append({
-                    "Session ID": file.stem,
-                    "Observations": len(lines),
-                    "Tokens": len(content) // 2,
-                    "Last Updated": datetime.fromtimestamp(file.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
+                    i18n.t("table.session_id"): file.stem,
+                    i18n.t("table.observations"): len(lines),
+                    i18n.t("table.tokens"): len(content) // 2,
+                    i18n.t("table.last_updated"): datetime.fromtimestamp(file.stat().st_mtime).strftime("%Y-%m-%d %H:%M")
                 })
             
             df = pd.DataFrame(session_data)
@@ -163,7 +163,7 @@ if selected == i18n.t("dashboard.title"):
 elif selected == i18n.t("sessions.title"):
     st.title(i18n.t("sessions.title"))
     
-    observations_dir = Path.cwd() / "memory" / "observations"
+    observations_dir = Path.cwd() / "memory" / i18n.t("table.observations")
     
     if observations_dir.exists():
         session_files = sorted(
@@ -180,7 +180,7 @@ elif selected == i18n.t("sessions.title"):
         # Pagination
         items_per_page = 10
         total_pages = (len(session_files) + items_per_page - 1) // items_per_page
-        page_num = st.number_input("Page", min_value=1, max_value=max(1, total_pages), value=1)
+        page_num = st.number_input(i18n.t("sessions.page"), min_value=1, max_value=max(1, total_pages), value=1)
         
         start_idx = (page_num - 1) * items_per_page
         end_idx = start_idx + items_per_page
@@ -188,14 +188,14 @@ elif selected == i18n.t("sessions.title"):
         
         # Display sessions with animation
         for file in page_files:
-            with st.expander(f"Session: {file.stem}"):
+            with st.expander(f"{i18n.t(\"sessions.session_prefix\")} {file.stem}"):
                 content = file.read_text(encoding="utf-8")
                 st.text(content)
                 
                 if st.button(i18n.t("sessions.delete"), key=f"del_{file.stem}"):
                     file.unlink()
                     vector_manager.delete_session(file.stem)
-                    st.success(f"Deleted {file.stem}")
+                    st.success(f"{i18n.t(\"sessions.deleted\")} {file.stem}")
                     st.rerun()
     else:
         st.info(i18n.t("sessions.no_data") if "sessions.no_data" in i18n.translations[lang] else "No sessions found.")
@@ -213,11 +213,11 @@ elif selected == i18n.t("search.title"):
         min_similarity = st.slider(i18n.t("search.similarity"), 0.0, 1.0, 0.3, 0.05)
     
     if st.button(i18n.t("search.button")) and query:
-        with st.spinner("Searching..."):
+        with st.spinner(i18n.t("search.searching")):
             results = vector_manager.search(query, top_k=top_k, min_similarity=min_similarity)
             
             if results:
-                st.success(f"Found {len(results)} results")
+                st.success(i18n.t("search.found").format(count=len(results)))
                 
                 for i, result in enumerate(results, 1):
                     with st.container():
@@ -227,13 +227,13 @@ elif selected == i18n.t("search.title"):
                         st.info(result.observation)
                         st.divider()
             else:
-                st.warning("No results found.")
+                st.warning(i18n.t("search.no_results"))
 
 # Analytics Page
 elif selected == i18n.t("analytics.title"):
     st.title(i18n.t("analytics.title"))
     
-    observations_dir = Path.cwd() / "memory" / "observations"
+    observations_dir = Path.cwd() / "memory" / i18n.t("table.observations")
     
     if observations_dir.exists() and list(observations_dir.glob("*.md")):
         # Priority distribution
@@ -271,13 +271,13 @@ elif selected == i18n.t("analytics.title"):
             
             timeline_data.append({
                 "Date": mtime.date(),
-                "Observations": len(lines)
+                i18n.t("table.observations"): len(lines)
             })
         
         df = pd.DataFrame(timeline_data)
-        df = df.groupby("Date")["Observations"].sum().reset_index()
+        df = df.groupby("Date")[i18n.t("table.observations")].sum().reset_index()
         
-        fig = px.line(df, x="Date", y="Observations", title=i18n.t("analytics.timeline"))
+        fig = px.line(df, x="Date", y=i18n.t("table.observations"), title=i18n.t("analytics.timeline"))
         st.plotly_chart(fig, use_container_width=True)
         
         # Token usage
@@ -288,14 +288,14 @@ elif selected == i18n.t("analytics.title"):
             content = file.read_text(encoding="utf-8")
             token_data.append({
                 "Session": file.stem[:20] + "..." if len(file.stem) > 20 else file.stem,
-                "Tokens": len(content) // 2
+                i18n.t("table.tokens"): len(content) // 2
             })
         
         df = pd.DataFrame(token_data)
-        fig = px.bar(df, x="Session", y="Tokens", title=i18n.t("analytics.token_usage"))
+        fig = px.bar(df, x="Session", y=i18n.t("table.tokens"), title=i18n.t("analytics.token_usage"))
         st.plotly_chart(fig, use_container_width=True)
     else:
-        st.info("No data available.")
+        st.info(i18n.t("analytics.no_data"))
 
 # Footer
 st.sidebar.markdown("---")
